@@ -93,10 +93,10 @@ public class DekstraAlgorithm
         //getAllBackPaths(targetNode, amountBackPaths);
 
         //multi thread finding back paths method
-        //getAllBackPaths_multiThreads(targetNode, amountBackPaths); //sometimes 4->6 is existing only in 4 or 5 back path. Necessary to fix it
+        getAllBackPaths_multiThreads(targetNode, amountBackPaths); //sometimes 4->6 is existing only in 4 or 5 back path. Necessary to fix it
 
         //multi + recursion thread finding back paths method
-        getAllBackPaths_multiThreads_recursion(targetNode, amountBackPaths);
+        //getAllBackPaths_multiThreads_recursion(targetNode, amountBackPaths);
 
         //Thread.sleep(2000);
 
@@ -184,14 +184,16 @@ public class DekstraAlgorithm
 
     //difficulty equals (2*n^3*m)
     //In fact, value 2*n^3*m for (n = 6, m = 5) our initial graph = 2160
-    //Spend time = 2333 mcs (HashMap)
-    //Spend time = 2420 mcs (TreeMap)
+    //Spend time = 2000 mcs (service)
+    //Spend time = 1100 mcs (call)
+    //Spend time = 900 mcs (run)
     private void getAllBackPaths_multiThreads(DekstraNode node, int amountAllBackPaths) throws ExecutionException, InterruptedException
     {
         int backPathIndex = 0;
         DekstraBackPathsFinderThread_2.setGraph(graph);
         DekstraBackPathsFinderThread_2.setMap(map);
-        DekstraBackPathsFinderThread_2.setAmountBackPaths(amountAllBackPaths);
+//        DekstraBackPathsFinderThread_2.setAmountBackPaths(graph.Nodes().size());
+        DekstraBackPathsFinderThread_2.setRootNode(node);
 //        DekstraBackPathsFinderThread_2.setAmountThreads(3);
 
         node.setInThread(true);
@@ -200,9 +202,12 @@ public class DekstraAlgorithm
         service = Executors.newFixedThreadPool(amountAllBackPaths);
 
         Timer.start();
+
         try {
             for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
                 futures.add(service.submit(new DekstraBackPathsFinderThread_2(entry.getKey())));
+//                new DekstraBackPathsFinderThread_2(entry.getKey()).call();
+//                service.execute(new DekstraBackPathsFinderThread_2(entry.getKey()));
             }
             for (Future<Integer> future : futures) {
                 results.add(future.get());
