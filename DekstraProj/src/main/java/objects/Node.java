@@ -7,11 +7,10 @@ public class Node
 {
     private int number;
     private List<Integer> nextNodes = new ArrayList<>();
+    private List<Integer> nextNodesUsedInBackPathsForm= new ArrayList<>();
     private List<Integer> weights;
 
-    public Node()
-    {
-    }
+    public Node(){}
 
     public Node(int number, List<Integer> nextNodes, List<Integer> weights)
     {
@@ -33,28 +32,25 @@ public class Node
         return weights;
     }
 
-    @Override
-    public String toString()
+    public List<Integer> getNextNodesUsedInBackPathsForm()
     {
-        StringBuilder builder = new StringBuilder("Node{" + "number=" + number);
-
-        builder.append(prepareArray(nextNodes, ", next="));
-        builder.append(prepareArray(weights, ", weights="));
-
-        builder.append("}");
-
-        return builder.toString();
+        return nextNodesUsedInBackPathsForm;
+    }
+    public void setNextNodesUsedInBackPathsForm(Integer nodeNumber)
+    {
+        this.nextNodesUsedInBackPathsForm.add(nodeNumber);
     }
 
-    public StringBuilder prepareArray(List<Integer> list, String beginText){
-        StringBuilder builder = new StringBuilder();
-        builder.append(beginText);
-
-        for (Integer elem : list){
-            builder.append(elem + ", ");
-        }
-
-        StringBuilder temp = new StringBuilder(builder.substring(0, builder.length() - 2));
-        return new StringBuilder(String.format("%-20.20s", temp));
-    }
+//    @Override
+//    public String toString()
+//    {
+//        StringBuilder builder = new StringBuilder("Node{" + "number=" + number);
+//
+//        builder.append(prepareArray(nextNodes, ", next="));
+//        builder.append(prepareArray(weights, ", weights="));
+//
+//        builder.append("}");
+//
+//        return builder.toString();
+//    }
 }

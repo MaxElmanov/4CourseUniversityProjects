@@ -7,7 +7,7 @@ import java.util.List;
 
 public class Graph
 {
-    private List<DekstraNode> nodes;
+    private static List<DekstraNode> nodes;
 
     public Graph()
     {
@@ -29,7 +29,7 @@ public class Graph
         nodes.add(node);
     }
 
-    public DekstraNode getNodeByNumber(Integer number)
+    public static DekstraNode getNodeByNumber(Integer number)
     {
         for (DekstraNode node : nodes) {
             if (node.getNumber() == number) {
@@ -37,7 +37,7 @@ public class Graph
             }
         }
 
-        UsefulFunction.throwException("The node with such number is not there");
+//        UsefulFunction.throwException("The node with such number is not there");
         return null;
     }
 
@@ -47,22 +47,13 @@ public class Graph
         System.out.println("Graph");
         StringBuilder builder = new StringBuilder();
 
-        for (DekstraNode node : nodes) {
-            builder.append(node + "\n");
-        }
-
-        return builder.toString();
-    }
-
-    private int findIndexInListBy(int nodeNumber)
-    {
-        for (int i = 0; i < nodes.size(); i++){
-            if(nodes.get(i).getNumber() == nodeNumber) {
-                return i;
+        if(nodes != null) {
+            for (DekstraNode node : nodes) {
+                builder.append(node);
+                builder.append("\n");
             }
         }
 
-        UsefulFunction.throwException("Node with such number doesn't exist");
-        return -1;
+        return builder.toString();
     }
 }
