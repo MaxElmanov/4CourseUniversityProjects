@@ -196,7 +196,7 @@ public class DekstraAlgorithm
 
             //e.x. last parents = 4 for nextNode = 5
             while (nextNodeWithManyParents != null && nextNodeWithManyParents.checkParentCorrespondingCheckersAreTrue()) {
-                nextNodeWithManyParents.setFalseForAllParents();
+                nextNodeWithManyParents.setFalseForAllCorrespondingParents();
                 //removing "nextNodeWithManyParents" node with many parents
                 UsefulFunction.removeExistingItemFromListByIndex(paths, nextNodeWithManyParents.getNumber(), Arrays.asList(startPoint, endPoint));
                 //previous count (pathNumber)
@@ -204,7 +204,7 @@ public class DekstraAlgorithm
                 nextNodeWithManyParents = cleanUnnecessaryNodesFromPaths(nextNodeWithManyParents, map.get(count - 1));
             }
 
-            UsefulFunction.fillUpMapByList(map, count, paths);
+            if(count < amountAllBackPaths) UsefulFunction.fillUpMapByList(map, count, paths);
 
             return;
         }
@@ -326,7 +326,6 @@ public class DekstraAlgorithm
 
     private void getAllBackPaths_multiThreads(DekstraNode node) throws ExecutionException, InterruptedException
     {
-        int backPathIndex = 0;
         DekstraBackPathsFinderThread_2.setGraph(graph);
         DekstraBackPathsFinderThread_2.setMap(map);
 //        DekstraBackPathsFinderThread_2.setamountAllBackPaths(graph.Nodes().size());
@@ -334,7 +333,7 @@ public class DekstraAlgorithm
 //        DekstraBackPathsFinderThread_2.setAmountThreads(3);
 
         node.setInThread(true);
-        UsefulFunction.fillUpMapForManyParents(map, backPathIndex, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
+        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
 
         service = Executors.newFixedThreadPool(amountAllBackPaths);
 
@@ -342,7 +341,8 @@ public class DekstraAlgorithm
 
         try {
             for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2(entry.getKey())));
+                futures.add(service.submit(new DekstraBackPathsFinderThread_2()));
+//                futures.add(service.submit(new DekstraBackPathsFinderThread_2(entry.getKey())));
 //                new DekstraBackPathsFinderThread_2(entry.getKey()).call();
 //                service.execute(new DekstraBackPathsFinderThread_2(entry.getKey()));
             }
