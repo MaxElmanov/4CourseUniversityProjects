@@ -13,9 +13,9 @@ public class DekstraNode extends Node
     private boolean wasUsedInBackPathsFrom;
     //multi threading algthm
     private boolean isInThread;
-    private int backPathIndex;
     //1 thread algthm && multi threading algthm
     private List<Boolean> parentsCorrespondingCheckers;
+    private int backPathIndex;
 
     public DekstraNode(Node node)
     {
@@ -51,7 +51,7 @@ public class DekstraNode extends Node
         return true;
     }
 
-    public void setFalseForAllParents()
+    public void setFalseForAllCorrespondingParents()
     {
         for (int i = 0; i < parentsCorrespondingCheckers.size(); i++) {
             setParentCorrespondingChecker(i, false);
