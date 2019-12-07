@@ -8,9 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Vector;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
 
 public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runnable
 {
@@ -19,9 +17,13 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
     private static ConcurrentMap<Integer, List<Integer>> map;
     private static DekstraNode rootNode;
     private static Vector<Integer> listOfUsedPathNumbers;
+    private static Vector<Future<Integer>> futures;
+    private static Vector<Integer> results;
+    private static ExecutorService service;
 
     //object
-// private DekstraNode node;
+    private DekstraNode node;
+    private DekstraNode firstParentNode;
     private Integer pathNumber = null;
 // private boolean stopMe = false;
 
@@ -40,29 +42,51 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         this.pathNumber = pathNumber;
     }
 
-    public DekstraBackPathsFinderThread_2() {}
+    public DekstraBackPathsFinderThread_2()
+    {
+    }
+
+    public DekstraBackPathsFinderThread_2(DekstraNode node)
+    {
+        this.node = node;
+    }
 
     @Override
-    public Integer call()
+    public Integer call() throws ExecutionException, InterruptedException
     {
-        DekstraNode parentNode = null;
-        System.out.println(Thread.currentThread().getName());
-//        System.out.println("pathNumber= " + pathNumber);
+        synchronized (graph) {
+            System.out.println(Thread.currentThread().getName());
 
-        parentNode = checkNodeNumberIsNotInThread(rootNode);
+            firstParentNode = node;
+            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
+            listOfUsedPathNumbers.add(pathNumber);
+        }
 
-        while (parentNode != null) {
-            UsefulFunction.fillupMap(map, pathNumber, parentNode.getNumber());
+        while (node != null) {
+            synchronized (graph) {
+                UsefulFunction.fillupMap(map, pathNumber, node.getNumber());
+            }
 
-            if (parentNode.getParents().isEmpty()) {
-                return pathNumber; //end of back path [return ~ break]
+            if (node.getParents().isEmpty()) {
+                break;
             }
             else {
-                parentNode = checkNodeNumberIsNotInThread(parentNode);
+                node = checkNodeNumberIsNotInThread(node);
             }
         }
 
-//        System.out.println("pathNumber end= " + pathNumber);
+        synchronized (graph) {
+            if (firstParentNode.getParents().size() > 1) {
+                for (Integer parentNodeNumber : firstParentNode.getParents()) {
+                    DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+                    futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
+                }
+//                for (Future<Integer> future : futures) {
+////                    results.add(future.get());
+//                    future.get();
+//                }
+            }
+        }
 
         return pathNumber;
     }
@@ -71,88 +95,50 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 // public void run()
 // {
 // DekstraNode parentNode = null;
-// synchronized (graph) {
-// System.out.println(Thread.currentThread().getName());
-// System.out.println("pathNumber= " + pathNumber);
+////        System.out.println(Thread.currentThread().getName());
+////        System.out.println("pathNumber= " + pathNumber);
 //
-// parentNode = checkNodeNumberIsNotInThread(rootNode);
-// }
+//        parentNode = checkNodeNumberIsNotInThread(rootNode);
 //
-// while (parentNode != null) {
-// UsefulFunction.fillupMap(map, pathNumber, parentNode.getNumber());
+//        while (parentNode != null) {
+//            synchronized (graph) {
+//                UsefulFunction.fillupMap(map, pathNumber, parentNode.getNumber());
+//            }
 //
-// if (parentNode.getParents().isEmpty()) {
-// break;
-// }
-// else {
-// parentNode = checkNodeNumberIsNotInThread(parentNode);
-// }
-// }
+//            if (parentNode.getParents().isEmpty()) {
+//                return; //end of back path [return ~ break]
+//            }
+//            else {
+//                parentNode = checkNodeNumberIsNotInThread(parentNode);
+//            }
+//        }
+//
+////        System.out.println("pathNumber end= " + pathNumber);
 // }
 
-// private DekstraNode checkNodeNumberIsNotInThread(DekstraNode node)
-// {
-// List<Integer> parentNodes = node.getParents();
-// List<Boolean> parentsCheckers = node.getParentsCorrespondingCheckers();
-//
-// for (int i = 0; i < parentNodes.size(); i++) {
-// DekstraNode parentNode = graph.getNodeByNumber(parentNodes.get(i));
-//
-// if (!parentNode.isInThread() && !parentsCheckers.get(i)) {
-// if (parentNodes.size() > 1 && parentNode.getParents().size() <= 1) {
-// parentsCheckers.set(i, true);
-// }
-//
-// return parentNode;
-// }
-// }
-//
-// return null;
-// }
-
-    private synchronized DekstraNode checkNodeNumberIsNotInThread(DekstraNode node)
-    {
-        //rootNode(13) is not checked because it exists in all back paths
-        DekstraNode newNotUsedNode = null;
-
-        if (!listOfUsedPathNumbers.contains(pathNumber)) {
-            Integer generatedPathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
-            if (generatedPathNumber == null) {
-                return null; //map hasn't contain unused key (pathNumber) in another thread
-            }
-            else {
-                listOfUsedPathNumbers.add(generatedPathNumber);
-                pathNumber = generatedPathNumber;
-            }
-        }
-
-        newNotUsedNode = getNodeIsNotInThread(map.get(pathNumber), node);
-
-        return newNotUsedNode == null
-               ? null
-               : newNotUsedNode;
-    }
-
-    private DekstraNode getNodeIsNotInThread(List<Integer> listOfMap, DekstraNode node)
+    private DekstraNode checkNodeNumberIsNotInThread(DekstraNode node)
     {
         List<Integer> parentNodes = node.getParents();
 
-        for (Integer parentNodeNumber : parentNodes) {
-            if (listOfMap.contains(parentNodeNumber)) {
-                getNodeIsNotInThread(listOfMap, Graph.getNodeByNumber(parentNodeNumber));
+        for (int i = 0; i < parentNodes.size(); i++) {
+            int parentNodeNumber = parentNodes.get(i);
+            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+
+            if(node.getParentsCorrespondingCheckers().get(i) == true && parentNodes.size() > 1) {
+                continue;
             }
-            else {
-                return Graph.getNodeByNumber(parentNodeNumber);
+            else{
+                node.setParentCorrespondingChecker(i , true);
             }
+
+            return parentNode;
         }
 
         return null;
     }
 
 
-    public static void
-
-    setGraph(Graph graph)
+    public static void setGraph(Graph graph)
     {
         DekstraBackPathsFinderThread_2.graph = graph;
     }
@@ -171,6 +157,21 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
     public static void setRootNode(DekstraNode rootNode)
     {
         DekstraBackPathsFinderThread_2.rootNode = rootNode;
+    }
+
+    public static void setFutures(List<Future<Integer>> futures)
+    {
+        DekstraBackPathsFinderThread_2.futures = new Vector(futures);
+    }
+
+    public static void setResults(List<Integer> results)
+    {
+        DekstraBackPathsFinderThread_2.results = new Vector(results);
+    }
+
+    public static void setService(ExecutorService service)
+    {
+        DekstraBackPathsFinderThread_2.service = service;
     }
 
     public static void printMap()

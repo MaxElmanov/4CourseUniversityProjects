@@ -90,6 +90,7 @@ public class DekstraAlgorithm
         System.out.println("\namount back paths = " + amountAllBackPaths);
 
         //UsefulFunction.printMap(map);
+        DekstraBackPathsFinderThread_2.printMap();
     }
 
     private int getAmountBackPaths(DekstraNode startNode, DekstraNode endNode)
@@ -333,21 +334,25 @@ public class DekstraAlgorithm
 
         DekstraBackPathsFinderThread_2.setRootNode(node);
 
-        node.setInThread(true);
+        service = Executors.newFixedThreadPool(node.getParents().size());
+        DekstraBackPathsFinderThread_2.setService(service);
 
-        service = Executors.newFixedThreadPool(amountAllBackPaths / 2);
+        DekstraBackPathsFinderThread_2.setFutures(futures);
+        DekstraBackPathsFinderThread_2.setResults(results);
+
+        node.setInThread(true);
+//        List<Thread> threads = new ArrayList<>();
 
         Timer.start();
 
         try {
-            for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2()));
-//                futures.add(service.submit(new DekstraBackPathsFinderThread_2(entry.getKey())));
-//                new DekstraBackPathsFinderThread_2(entry.getKey()).call();
-//                service.execute(new DekstraBackPathsFinderThread_2(entry.getKey()));
+            for (Integer parentNodeNumber : node.getParents()) {
+                DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+                futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
             }
             for (Future<Integer> future : futures) {
-                results.add(future.get());
+//                results.add(future.get());
+                 future.get();
             }
         }
         finally {
@@ -357,7 +362,7 @@ public class DekstraAlgorithm
         System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
 
         //DekstraBackPathsFinderThread_2.shutdown();
-        DekstraBackPathsFinderThread_2.printMap();
+//        DekstraBackPathsFinderThread_2.printMap();
     }
 
     private void getAllBackPaths_multiThreads_recursion(DekstraNode node, int amountAllBackPaths) throws ExecutionException, InterruptedException

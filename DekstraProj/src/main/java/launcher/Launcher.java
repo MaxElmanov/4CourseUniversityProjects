@@ -25,7 +25,7 @@ public class Launcher
         graph.add(new DekstraNode(new Node(2,  Arrays.asList(5, 10),   Arrays.asList(1, 4))));
         graph.add(new DekstraNode(new Node(3,  Arrays.asList(5),   Arrays.asList(1))));
         graph.add(new DekstraNode(new Node(4,  Arrays.asList(5),   Arrays.asList(1))));
-        graph.add(new DekstraNode(new Node(5,  Arrays.asList(6, 7, 8),   Arrays.asList(1, 1, 1))));
+        graph.add(new DekstraNode(new Node(5,  Arrays.asList(6, 7, 8, 12),   Arrays.asList(1, 1, 1, 3))));
         graph.add(new DekstraNode(new Node(6,  Arrays.asList(9),   Arrays.asList(1))));
         graph.add(new DekstraNode(new Node(7,  Arrays.asList(9),   Arrays.asList(1))));
         graph.add(new DekstraNode(new Node(8,  Arrays.asList(9),   Arrays.asList(1))));
