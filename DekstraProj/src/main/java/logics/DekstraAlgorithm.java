@@ -196,7 +196,7 @@ public class DekstraAlgorithm
             count++;
 
             //e.x. last parents = 4 for nextNode = 5
-            while (nextNodeWithManyParents != null && nextNodeWithManyParents.checkParentCorrespondingCheckersAreTrue()) {
+            while (nextNodeWithManyParents != null && nextNodeWithManyParents.allParentsCorrespondingCheckersAreTrue()) {
                 nextNodeWithManyParents.setFalseForAllCorrespondingParents();
                 //removing "nextNodeWithManyParents" node with many parents
                 UsefulFunction.removeExistingItemFromListByIndex(paths, nextNodeWithManyParents.getNumber(), Arrays.asList(startPoint, endPoint));

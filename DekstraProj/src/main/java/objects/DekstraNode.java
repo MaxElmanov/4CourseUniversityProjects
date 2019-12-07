@@ -40,7 +40,7 @@ public class DekstraNode extends Node
         parentsCorrespondingCheckers.set(index, value);
     }
 
-    public boolean checkParentCorrespondingCheckersAreTrue()
+    public boolean allParentsCorrespondingCheckersAreTrue()
     {
         for (Boolean pcc : parentsCorrespondingCheckers) {
             if (pcc == false) {

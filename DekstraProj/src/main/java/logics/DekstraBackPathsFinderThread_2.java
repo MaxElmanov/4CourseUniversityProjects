@@ -71,24 +71,46 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
                 break;
             }
             else {
-                node = checkNodeNumberIsNotInThread(node);
+                node = getNodeNumberIsNotInThread(node);
             }
         }
 
         synchronized (graph) {
-            if (firstParentNode.getParents().size() > 1) {
-                for (Integer parentNodeNumber : firstParentNode.getParents()) {
-                    DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-                    futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
-                }
+            List<Integer> listOfMap = map.get(pathNumber);
+            for (int i = listOfMap.size() - 1; i >= 0; i--) { //go from second node (1 -> [2, 3, 4, 14, 15])
+                DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(i));
+                DekstraNode newParentNode = getNewParentCorrespondingChecker(nextNode);
+
+                if (newParentNode == null) break;
+
+                futures.add(service.submit(new DekstraBackPathsFinderThread_2(nextNode)));
+            }
 //                for (Future<Integer> future : futures) {
 ////                    results.add(future.get());
 //                    future.get();
 //                }
-            }
         }
 
         return pathNumber;
+    }
+
+    private DekstraNode getNewParentCorrespondingChecker(DekstraNode nextNode)
+    {
+        if (nextNode.getParents().size() <= 1) {
+            for (Integer nextNodeNumber : node.getNextNodes()) {
+                DekstraNode tempNextNode = Graph.getNodeByNumber(nextNodeNumber);
+
+                if (tempNextNode.equals(rootNode)) return null;
+
+                getNewParentCorrespondingChecker(tempNextNode);
+            }
+        }
+        //nextNode.getParents().size() > 1
+        else {
+            if (nextNode.allParentsCorrespondingCheckersAreTrue()) {
+
+            }
+        }
     }
 
 // @Override
@@ -98,7 +120,7 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 ////        System.out.println(Thread.currentThread().getName());
 ////        System.out.println("pathNumber= " + pathNumber);
 //
-//        parentNode = checkNodeNumberIsNotInThread(rootNode);
+//        parentNode = getNodeNumberIsNotInThread(rootNode);
 //
 //        while (parentNode != null) {
 //            synchronized (graph) {
@@ -109,14 +131,14 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 //                return; //end of back path [return ~ break]
 //            }
 //            else {
-//                parentNode = checkNodeNumberIsNotInThread(parentNode);
+//                parentNode = getNodeNumberIsNotInThread(parentNode);
 //            }
 //        }
 //
 ////        System.out.println("pathNumber end= " + pathNumber);
 // }
 
-    private DekstraNode checkNodeNumberIsNotInThread(DekstraNode node)
+    private DekstraNode getNodeNumberIsNotInThread(DekstraNode node)
     {
         List<Integer> parentNodes = node.getParents();
 
@@ -124,11 +146,17 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
             int parentNodeNumber = parentNodes.get(i);
             DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
 
-            if(node.getParentsCorrespondingCheckers().get(i) == true && parentNodes.size() > 1) {
+            //need to deal with this condition!!!!!
+            // I think I need to create new constructor with 2nd parameter getParentsCorrespondingCheckers() or
+            // clear this list getParentsCorrespondingCheckers() with thread goes to last parent of current node
+            if (node.getParentsCorrespondingCheckers().get(i)) {
+                if (i == (node.getParentsCorrespondingCheckers().size() - 1) && parentNodes.size() > 1) {
+                    node.setFalseForAllCorrespondingParents();
+                }
                 continue;
             }
-            else{
-                node.setParentCorrespondingChecker(i , true);
+            else {
+                node.setParentCorrespondingChecker(i, true);
             }
 
             return parentNode;
