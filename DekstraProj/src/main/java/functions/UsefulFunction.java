@@ -4,6 +4,7 @@ import objects.DekstraNode;
 
 import java.lang.reflect.Array;
 import java.util.*;
+import java.util.concurrent.ConcurrentMap;
 
 public class UsefulFunction
 {
@@ -97,8 +98,8 @@ public class UsefulFunction
     {
         for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
             System.out.println("key = " + entry.getKey());
-            for (Integer parent : entry.getValue()) {
-                System.out.print(parent + "->");
+            for (Integer nodeNumber : entry.getValue()) {
+                System.out.print(nodeNumber + "->");
             }
             System.out.println();
         }
@@ -146,5 +147,17 @@ public class UsefulFunction
         }
 
         return false;
+    }
+
+    public static Integer generateNewPathNumberOf(ConcurrentMap<Integer, List<Integer>> map, Vector<Integer> listOfUsedPathNumbers)
+    {
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            Integer key = entry.getKey();
+            if(!listOfUsedPathNumbers.contains(key)) {
+                return key;
+            }
+        }
+
+        return null;
     }
 }

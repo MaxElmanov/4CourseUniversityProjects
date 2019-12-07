@@ -89,7 +89,7 @@ public class DekstraAlgorithm
 
         System.out.println("\namount back paths = " + amountAllBackPaths);
 
-        UsefulFunction.printMap(map);
+        //UsefulFunction.printMap(map);
     }
 
     private int getAmountBackPaths(DekstraNode startNode, DekstraNode endNode)
@@ -327,15 +327,15 @@ public class DekstraAlgorithm
     private void getAllBackPaths_multiThreads(DekstraNode node) throws ExecutionException, InterruptedException
     {
         DekstraBackPathsFinderThread_2.setGraph(graph);
+
+        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
         DekstraBackPathsFinderThread_2.setMap(map);
-//        DekstraBackPathsFinderThread_2.setamountAllBackPaths(graph.Nodes().size());
+
         DekstraBackPathsFinderThread_2.setRootNode(node);
-//        DekstraBackPathsFinderThread_2.setAmountThreads(3);
 
         node.setInThread(true);
-        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
 
-        service = Executors.newFixedThreadPool(amountAllBackPaths);
+        service = Executors.newFixedThreadPool(amountAllBackPaths / 2);
 
         Timer.start();
 
@@ -357,6 +357,7 @@ public class DekstraAlgorithm
         System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
 
         //DekstraBackPathsFinderThread_2.shutdown();
+        DekstraBackPathsFinderThread_2.printMap();
     }
 
     private void getAllBackPaths_multiThreads_recursion(DekstraNode node, int amountAllBackPaths) throws ExecutionException, InterruptedException
