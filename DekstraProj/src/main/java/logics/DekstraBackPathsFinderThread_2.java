@@ -4,10 +4,7 @@ import functions.UsefulFunction;
 import objects.DekstraNode;
 import objects.Graph;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Vector;
+import java.util.*;
 import java.util.concurrent.*;
 
 public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runnable
@@ -51,7 +48,7 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
     }
 
     @Override
-    public Integer call()
+    public Integer call() throws ExecutionException, InterruptedException
     {
         synchronized (graph) {
             System.out.println(Thread.currentThread().getName());
@@ -76,16 +73,16 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 
         synchronized (graph) {
             List<Integer> listOfMap = map.get(pathNumber);
-//            fillUpNodesCheckers(listOfMap);
+            fillUpParentNodesCheckersFrom(listOfMap);
 
-//            UsefulFunction.printList(listOfMap);
+            DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2)); //listOfMap.size() - 2 == number after rootNode 1->[15, 14, 2, 3, 4]
 
-            for (int i = listOfMap.size() - 2; i >= 0; i--) { //go from second node (1 -> [2, 3, 4, 14, 15])
-                DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(i));
+            if (!isItNecessaryToCreateNewThread(nextNode, listOfMap)) return pathNumber;
 
-                if (!isItNecessaryToCreateNewThread(nextNode, listOfMap)) break;
-
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2(firstParentNode, nodesCheckers)));
+            futures.add(service.submit(new DekstraBackPathsFinderThread_2(firstParentNode, nodesCheckers)));
+            for (Future<Integer> future : futures) {
+//                results.add(future.get());
+                future.get();
             }
         }
 
@@ -101,23 +98,28 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         }
         else if (parentNodes.size() == 1) {
             DekstraNode parentNode = Graph.getNodeByNumber(parentNodes.get(0));
-            if (parentNode != null) { //else return null
-                return parentNode;
-            }
+            return parentNode == null ? null : parentNode;
         }
-        else {
-            List<Boolean> nodeCheckersList = nodesCheckers.get(node.getNumber());
+        else { //parentNodes.size() > 1
+            if(nodesCheckers == null || nodesCheckers.isEmpty()) {
 
-            for (int i = 0; i < parentNodes.size(); i++) {
-                int parentNodeNumber = parentNodes.get(i);
-                DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-
-                if (nodeCheckersList.get(i) == true) {
-                    continue;
-                }
-                else {
-                    nodeCheckersList.set(i, true);
+                for (int i = 0; i < parentNodes.size(); i++) {
+                    int parentNodeNumber = parentNodes.get(i);
+                    DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
                     return parentNode;
+                }
+            }
+            else{
+                List<Boolean> nodeCheckersList = nodesCheckers.get(node.getNumber());
+
+                for (int i = 0; i < parentNodes.size(); i++) {
+                    int parentNodeNumber = parentNodes.get(i);
+                    DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+
+                    if (nodeCheckersList.get(i) == false) {
+                        nodeCheckersList.set(i, true);
+                        return parentNode;
+                    }
                 }
             }
         }
@@ -127,13 +129,9 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 
     private boolean isItNecessaryToCreateNewThread(DekstraNode nextNode, List<Integer> listOfMap)
     {
-        List<Integer> nextNodes = nextNode.getNextNodes();
         List<Integer> parentNodes = nextNode.getParents();
 
-        System.out.println("pN = " + pathNumber);
-        System.out.println("node n = " + nextNode.getNumber());
-
-        if(parentNodes.equals(targetNode) || parentNodes.size() < 1) {
+        if (nextNode.equals(targetNode) || parentNodes.size() < 1) {
             return false;
         }
         else if (parentNodes.size() == 1) {
@@ -208,40 +206,33 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         return true;
     }
 
-    private void fillUpNodesCheckers(List<Integer> listOfMap)
+    private void fillUpNodesCheckersFrom(DekstraNode node)
     {
-        for (Integer nodeNumber : listOfMap) {
-            DekstraNode node = Graph.getNodeByNumber(nodeNumber);
+        List<Boolean> booleanList = new ArrayList<>();
+        for (int i = 0; i < node.getParents().size(); i++){
+            booleanList.add(false);
+        }
+        nodesCheckers.put(node.getNumber(), booleanList);
+    }
+
+    private void fillUpParentNodesCheckersFrom(List<Integer> listOfMap)
+    {
+        for (int i = 0; i < listOfMap.size(); i++){
+            DekstraNode node = Graph.getNodeByNumber(listOfMap.get(i));
             List<Integer> parentNodes = node.getParents();
 
-            if (node.equals(rootNode) || node.equals(targetNode) || parentNodes.size() <= 1) { //if node == targetNode(13) or node == rootNode (1)
-                continue;
-            }
-
-            List<Boolean> parentBooleanList = new ArrayList<>();
-
-            for (Map.Entry<Integer, List<Boolean>> entry : nodesCheckers.entrySet()) {
-                int keyNodeNumber = entry.getKey();
-                if (keyNodeNumber == nodeNumber) {
-                    List<Boolean> booleanList = entry.getValue();
-                    //"booleanList" corresponds by indexes to "parentNodes"
-                    for (int i = 0; i < booleanList.size(); i++) {
-                        if (listOfMap.contains(parentNodes.get(i))) {
-                            booleanList.add(true);
-                        }
+            if(!node.equals(rootNode) && !node.equals(targetNode) && parentNodes.size() > 1) {
+                List<Boolean> booleanList = new ArrayList<>();
+                for (Integer parentNodeNumber : parentNodes){
+                    if(listOfMap.contains(parentNodeNumber)) {
+                        booleanList.add(true);
                     }
-
-                    break;
+                    else{
+                        booleanList.add(false);
+                    }
                 }
+                nodesCheckers.put(node.getNumber(), booleanList);
             }
-
-            //"booleanList" corresponds by indexes to "parentNodes"
-            for (int i = 0; i < parentNodes.size(); i++) {
-                if (listOfMap.contains(parentNodes.get(i))) {
-                    parentBooleanList.add(true);
-                }
-            }
-            nodesCheckers.put(nodeNumber, parentBooleanList);
         }
     }
 
