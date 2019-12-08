@@ -105,6 +105,14 @@ public class UsefulFunction
         }
     }
 
+    public static void printList(List<Integer> list)
+    {
+        for (Integer nodeNumber : list) {
+            System.out.print(nodeNumber + "->");
+        }
+        System.out.println();
+    }
+
     public static boolean isLastIndex(int index, List<Integer> parentNodesNumbers)
     {
         return (parentNodesNumbers.size() - 1) == index
@@ -121,7 +129,7 @@ public class UsefulFunction
 
     public static void removeExistingItemFromListByIndex(List<Integer> paths, Integer element, List<Integer> besidesList)
     {
-        if(besidesList.contains(element)) {
+        if (besidesList.contains(element)) {
             return;
         }
 
@@ -131,8 +139,8 @@ public class UsefulFunction
 
     public static int getExistingElementIndexIn(List<Integer> listOfMap, DekstraNode node)
     {
-        for (int i = 0; i < listOfMap.size(); i++){
-            if(listOfMap.get(i) == node.getNumber()) {
+        for (int i = 0; i < listOfMap.size(); i++) {
+            if (listOfMap.get(i) == node.getNumber()) {
                 return i;
             }
         }
@@ -142,7 +150,7 @@ public class UsefulFunction
 
     public static boolean elementExistsIn(List<Integer> list, int element)
     {
-        if(list.contains(element)) {
+        if (list.contains(element)) {
             return true;
         }
 
@@ -153,7 +161,7 @@ public class UsefulFunction
     {
         for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
             Integer key = entry.getKey();
-            if(!listOfUsedPathNumbers.contains(key)) {
+            if (!listOfUsedPathNumbers.contains(key)) {
                 return key;
             }
         }

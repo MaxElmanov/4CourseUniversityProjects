@@ -190,7 +190,7 @@ public class DekstraAlgorithm
         List<Integer> currentNodeParentsNumbers = currentNode.getParents();
 
         if (currentNodeParentsNumbers.isEmpty()) {
-            DekstraNode nextNodeWithManyParents = getNextNodeWithManyParents(currentNode, count, map);
+            DekstraNode nextNodeWithManyParents = getNextNodeWithManyParents(currentNode, map.get(count));
 
             //new count (pathNumber)
             count++;
@@ -263,10 +263,8 @@ public class DekstraAlgorithm
         return null;
     }
 
-    private DekstraNode getNextNodeWithManyParents(DekstraNode currentNode, int pathNumber, Map<Integer, List<Integer>> map)
+    private DekstraNode getNextNodeWithManyParents(DekstraNode currentNode, List<Integer> listInMap)
     {
-        List<Integer> listInMap = map.get(pathNumber);
-
         if (listInMap != null && listInMap.contains(currentNode.getNumber())) {
             return goThroughNextNodesBy(currentNode, listInMap);
         }
@@ -332,7 +330,9 @@ public class DekstraAlgorithm
         UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
         DekstraBackPathsFinderThread_2.setMap(map);
 
-        DekstraBackPathsFinderThread_2.setRootNode(node);
+        DekstraBackPathsFinderThread_2.setTargetNode(node);
+        DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
+        DekstraBackPathsFinderThread_2.setRootNode(rootNode);
 
         service = Executors.newFixedThreadPool(node.getParents().size());
         DekstraBackPathsFinderThread_2.setService(service);

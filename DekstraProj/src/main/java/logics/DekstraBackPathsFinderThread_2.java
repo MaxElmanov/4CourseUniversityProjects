@@ -15,6 +15,7 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
     //static
     private static Graph graph;
     private static ConcurrentMap<Integer, List<Integer>> map;
+    private static DekstraNode targetNode;
     private static DekstraNode rootNode;
     private static Vector<Integer> listOfUsedPathNumbers;
     private static Vector<Future<Integer>> futures;
@@ -25,12 +26,7 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
     private DekstraNode node;
     private DekstraNode firstParentNode;
     private Integer pathNumber = null;
-// private boolean stopMe = false;
-
-//finding all back paths by multi thread
-// private static ExecutorService service;
-// private static List<Future<Integer» futures;
-// private static List<Integer> results;
+    private ConcurrentMap<Integer, List<Boolean>> nodesCheckers;
 
     static {
         listOfUsedPathNumbers = new Vector<>();
@@ -42,17 +38,20 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         this.pathNumber = pathNumber;
     }
 
-    public DekstraBackPathsFinderThread_2()
-    {
-    }
-
     public DekstraBackPathsFinderThread_2(DekstraNode node)
     {
         this.node = node;
+        nodesCheckers = new ConcurrentHashMap<>();
+    }
+
+    public DekstraBackPathsFinderThread_2(DekstraNode nextNode, ConcurrentMap<Integer, List<Boolean>> nodesCheckers)
+    {
+        this(nextNode);
+        this.nodesCheckers = nodesCheckers;
     }
 
     @Override
-    public Integer call() throws ExecutionException, InterruptedException
+    public Integer call()
     {
         synchronized (graph) {
             System.out.println(Thread.currentThread().getName());
@@ -77,50 +76,183 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 
         synchronized (graph) {
             List<Integer> listOfMap = map.get(pathNumber);
-            for (int i = listOfMap.size() - 1; i >= 0; i--) { //go from second node (1 -> [2, 3, 4, 14, 15])
+//            fillUpNodesCheckers(listOfMap);
+
+//            UsefulFunction.printList(listOfMap);
+
+            for (int i = listOfMap.size() - 2; i >= 0; i--) { //go from second node (1 -> [2, 3, 4, 14, 15])
                 DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(i));
-                DekstraNode newParentNode = getNewParentCorrespondingChecker(nextNode);
 
-                if (newParentNode == null) break;
+                if (!isItNecessaryToCreateNewThread(nextNode, listOfMap)) break;
 
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2(nextNode)));
+                futures.add(service.submit(new DekstraBackPathsFinderThread_2(firstParentNode, nodesCheckers)));
             }
-//                for (Future<Integer> future : futures) {
-////                    results.add(future.get());
-//                    future.get();
-//                }
         }
 
         return pathNumber;
     }
 
-    private DekstraNode getNewParentCorrespondingChecker(DekstraNode nextNode)
+    private DekstraNode getNodeNumberIsNotInThread(DekstraNode node)
     {
-        if (nextNode.getParents().size() <= 1) {
-            for (Integer nextNodeNumber : node.getNextNodes()) {
-                DekstraNode tempNextNode = Graph.getNodeByNumber(nextNodeNumber);
+        List<Integer> parentNodes = node.getParents();
 
-                if (tempNextNode.equals(rootNode)) return null;
-
-                getNewParentCorrespondingChecker(tempNextNode);
+        if (node.equals(targetNode) || parentNodes.isEmpty()) {
+            return null;
+        }
+        else if (parentNodes.size() == 1) {
+            DekstraNode parentNode = Graph.getNodeByNumber(parentNodes.get(0));
+            if (parentNode != null) { //else return null
+                return parentNode;
             }
         }
-        //nextNode.getParents().size() > 1
         else {
-            if (nextNode.allParentsCorrespondingCheckersAreTrue()) {
+            List<Boolean> nodeCheckersList = nodesCheckers.get(node.getNumber());
 
+            for (int i = 0; i < parentNodes.size(); i++) {
+                int parentNodeNumber = parentNodes.get(i);
+                DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+
+                if (nodeCheckersList.get(i) == true) {
+                    continue;
+                }
+                else {
+                    nodeCheckersList.set(i, true);
+                    return parentNode;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean isItNecessaryToCreateNewThread(DekstraNode nextNode, List<Integer> listOfMap)
+    {
+        List<Integer> nextNodes = nextNode.getNextNodes();
+        List<Integer> parentNodes = nextNode.getParents();
+
+        System.out.println("pN = " + pathNumber);
+        System.out.println("node n = " + nextNode.getNumber());
+
+        if(parentNodes.equals(targetNode) || parentNodes.size() < 1) {
+            return false;
+        }
+        else if (parentNodes.size() == 1) {
+            DekstraNode newNextNode = getNextNodeWithManyParentsFrom(listOfMap, nextNode);
+            return isItNecessaryToCreateNewThread(newNextNode, listOfMap);
+        }
+        else { //parentNodes.size() > 1
+            if (checkAllNodesCheckersAreTrueOF(nextNode)) {
+                DekstraNode newNextNode = getNextNodeWithManyParentsFrom(listOfMap, nextNode);
+                setFalseAllCheckersOf(nextNode);
+                if (newNextNode != null && !newNextNode.equals(targetNode)) { //newNextNode != null and targetNode
+                    return true;
+                }
+            }
+            else {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private void setFalseAllCheckersOf(DekstraNode nextNode)
+    {
+        for (Map.Entry<Integer, List<Boolean>> entry : nodesCheckers.entrySet()) {
+            int key = entry.getKey();
+            if (key == nextNode.getNumber()) {
+                for (Boolean checker : entry.getValue()) {
+                    if (checker == true) {
+                        checker = false;
+                    }
+                }
+                break;
             }
         }
     }
 
-// @Override
+    private DekstraNode getNextNodeWithManyParentsFrom(List<Integer> listInMap, DekstraNode currentNode)
+    {
+        if (listInMap != null && listInMap.contains(currentNode.getNumber())) {
+            for (Integer nextNodeNumber : currentNode.getNextNodes()) {
+
+                if (listInMap.contains(nextNodeNumber)) {
+                    DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+                    if (nextNode.getParents().size() > 1) {
+                        return nextNode;
+                    }
+                    else {
+                        return getNextNodeWithManyParentsFrom(listInMap, nextNode);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private boolean checkAllNodesCheckersAreTrueOF(DekstraNode nextNode)
+    {
+        for (Map.Entry<Integer, List<Boolean>> entry : nodesCheckers.entrySet()) {
+            int key = entry.getKey();
+            if (key == nextNode.getNumber()) {
+                for (Boolean checker : entry.getValue()) {
+                    if (checker == false) {
+                        return false;
+                    }
+                }
+                break;
+            }
+        }
+
+        return true;
+    }
+
+    private void fillUpNodesCheckers(List<Integer> listOfMap)
+    {
+        for (Integer nodeNumber : listOfMap) {
+            DekstraNode node = Graph.getNodeByNumber(nodeNumber);
+            List<Integer> parentNodes = node.getParents();
+
+            if (node.equals(rootNode) || node.equals(targetNode) || parentNodes.size() <= 1) { //if node == targetNode(13) or node == rootNode (1)
+                continue;
+            }
+
+            List<Boolean> parentBooleanList = new ArrayList<>();
+
+            for (Map.Entry<Integer, List<Boolean>> entry : nodesCheckers.entrySet()) {
+                int keyNodeNumber = entry.getKey();
+                if (keyNodeNumber == nodeNumber) {
+                    List<Boolean> booleanList = entry.getValue();
+                    //"booleanList" corresponds by indexes to "parentNodes"
+                    for (int i = 0; i < booleanList.size(); i++) {
+                        if (listOfMap.contains(parentNodes.get(i))) {
+                            booleanList.add(true);
+                        }
+                    }
+
+                    break;
+                }
+            }
+
+            //"booleanList" corresponds by indexes to "parentNodes"
+            for (int i = 0; i < parentNodes.size(); i++) {
+                if (listOfMap.contains(parentNodes.get(i))) {
+                    parentBooleanList.add(true);
+                }
+            }
+            nodesCheckers.put(nodeNumber, parentBooleanList);
+        }
+    }
+
+    // @Override
 // public void run()
 // {
 // DekstraNode parentNode = null;
 ////        System.out.println(Thread.currentThread().getName());
 ////        System.out.println("pathNumber= " + pathNumber);
 //
-//        parentNode = getNodeNumberIsNotInThread(rootNode);
+//        parentNode = getNodeNumberIsNotInThread(targetNode);
 //
 //        while (parentNode != null) {
 //            synchronized (graph) {
@@ -138,34 +270,6 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 ////        System.out.println("pathNumber end= " + pathNumber);
 // }
 
-    private DekstraNode getNodeNumberIsNotInThread(DekstraNode node)
-    {
-        List<Integer> parentNodes = node.getParents();
-
-        for (int i = 0; i < parentNodes.size(); i++) {
-            int parentNodeNumber = parentNodes.get(i);
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-
-            //need to deal with this condition!!!!!
-            // I think I need to create new constructor with 2nd parameter getParentsCorrespondingCheckers() or
-            // clear this list getParentsCorrespondingCheckers() with thread goes to last parent of current node
-            if (node.getParentsCorrespondingCheckers().get(i)) {
-                if (i == (node.getParentsCorrespondingCheckers().size() - 1) && parentNodes.size() > 1) {
-                    node.setFalseForAllCorrespondingParents();
-                }
-                continue;
-            }
-            else {
-                node.setParentCorrespondingChecker(i, true);
-            }
-
-            return parentNode;
-        }
-
-        return null;
-    }
-
-
     public static void setGraph(Graph graph)
     {
         DekstraBackPathsFinderThread_2.graph = graph;
@@ -180,6 +284,11 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
             }
             DekstraBackPathsFinderThread_2.map.put(entry.getKey(), tempList);
         }
+    }
+
+    public static void setTargetNode(DekstraNode targetNode)
+    {
+        DekstraBackPathsFinderThread_2.targetNode = targetNode;
     }
 
     public static void setRootNode(DekstraNode rootNode)
