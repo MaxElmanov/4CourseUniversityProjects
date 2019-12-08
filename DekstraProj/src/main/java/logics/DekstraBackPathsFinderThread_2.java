@@ -80,10 +80,6 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
             if (!isItNecessaryToCreateNewThread(nextNode, listOfMap)) return pathNumber;
 
             futures.add(service.submit(new DekstraBackPathsFinderThread_2(firstParentNode, nodesCheckers)));
-            for (Future<Integer> future : futures) {
-//                results.add(future.get());
-                future.get();
-            }
         }
 
         return pathNumber;
