@@ -18,26 +18,26 @@ public class UsefulFunction
         }
     }
 
-    public static void fillupMap(Map<Integer, List<Integer>> map, int key, int newValue)
+    public static <K,V> void fillUpMap(Map<K, List<V>> map, K key, V newValue)
     {
         if (map.isEmpty()) {
             map.put(key, Arrays.asList(newValue));
             return;
         }
 
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
-            if (entry.getKey() == key) {
-                List<Integer> tempList = new ArrayList<>();
+        for (Map.Entry<K, List<V>> entry : map.entrySet()) {
+        if (entry.getKey() == key) {
+            List<V> tempList = new ArrayList<>();
 
-                for (Integer v : entry.getValue()) {
-                    tempList.add(v);
-                }
-
-                tempList.add(newValue);
-
-                map.put(key, tempList);
+            for (V v : entry.getValue()) {
+                tempList.add(v);
             }
+
+            tempList.add(newValue);
+
+            map.put(key, tempList);
         }
+    }
     }
 
     public static void fillUpMapForManyParents(Map<Integer, List<Integer>> map, int fromIndex, int newValue, int toIndex)

@@ -229,11 +229,11 @@ public class DekstraAlgorithm
             }
 
             if (!UsefulFunction.elementExistsIn(map.get(count), parentNode.getNumber())) {
-                UsefulFunction.fillupMap(map, count, parentNodeNumber);
+                UsefulFunction.fillUpMap(map, count, parentNodeNumber);
             }
             else {
-                UsefulFunction.fillupMap(map, count, currentNodeNumber);
-                UsefulFunction.fillupMap(map, count, parentNodeNumber);
+                UsefulFunction.fillUpMap(map, count, currentNodeNumber);
+                UsefulFunction.fillUpMap(map, count, parentNodeNumber);
             }
 
             getAllBackPaths_recursion(parentNode);
@@ -308,7 +308,7 @@ public class DekstraAlgorithm
                     }
                 }
                 else {
-                    UsefulFunction.fillupMap(map, backPathIndex, currentNode.getNumber());
+                    UsefulFunction.fillUpMap(map, backPathIndex, currentNode.getNumber());
                 }
 
                 if (currentNode.getParents().isEmpty()) {
