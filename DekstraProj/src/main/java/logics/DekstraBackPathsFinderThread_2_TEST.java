@@ -7,86 +7,75 @@ import objects.Graph;
 import java.util.*;
 import java.util.concurrent.*;
 
-public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runnable
+public class DekstraBackPathsFinderThread_2_TEST
 {
     //static
     private static Graph graph;
-    private static ConcurrentMap<Integer, List<Integer>>map;
+    private static Map<Integer, List<Integer>> map;
     private static DekstraNode targetNode;
     private static DekstraNode rootNode;
-    private static Vector<Integer> listOfUsedPathNumbers;
-    private static Vector<Future<Integer>>futures;
-    private static Vector<Integer> results;
-    private static ExecutorService service;
+    private static List<Integer> listOfUsedPathNumbers;
 
     //object
     private DekstraNode node;
     private DekstraNode firstParentNode;
     private Integer pathNumber = null;
-    private ConcurrentMap<Integer, List<Integer>>nodesCheckers;
+    private Map<Integer, List<Integer>> nodesCheckers;
     private List<Integer> readyListOfMap;
 
     static {
         listOfUsedPathNumbers = new Vector<>();
-        map = new ConcurrentHashMap<>();
+        map = new HashMap<>();
     }
 
-    public DekstraBackPathsFinderThread_2(DekstraNode readyListOfMapStartNode, List<Integer> readyListOfMap, ConcurrentMap<Integer, List<Integer>> nodesCheckers)
+    public DekstraBackPathsFinderThread_2_TEST(DekstraNode readyListOfMapStartNode, List<Integer> readyListOfMap, Map<Integer, List<Integer>> nodesCheckers)
     {
         this.node = readyListOfMapStartNode;
         this.nodesCheckers = nodesCheckers;
         this.readyListOfMap = readyListOfMap;
     }
 
-    public DekstraBackPathsFinderThread_2(DekstraNode nextNode)
+    public DekstraBackPathsFinderThread_2_TEST(DekstraNode nextNode)
     {
         this.node = nextNode;
         this.nodesCheckers = new ConcurrentHashMap<>();
     }
 
-    @Override
-    public Integer call() throws ExecutionException, InterruptedException
+    public void CALL()
     {
-        synchronized (graph) {
-            System.out.println(Thread.currentThread().getName());
+        pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
 
-            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
+        if(pathNumber == null) return;
 
-            if(pathNumber == null) return pathNumber;
+        listOfUsedPathNumbers.add(pathNumber);
 
-            listOfUsedPathNumbers.add(pathNumber);
+        if (readyListOfMap != null && !readyListOfMap.isEmpty()) {
+            UsefulFunction.fillUpMapByReverseList(map, pathNumber, readyListOfMap);
+        }
 
-            if (readyListOfMap != null && !readyListOfMap.isEmpty()) {
-                UsefulFunction.fillUpMapByReverseList(map, pathNumber, readyListOfMap);
+        while (node != null) {
+            UsefulFunction.fillUpMap(map, pathNumber, node.getNumber());
+
+            List<Integer> parentNodes = node.getParents();
+
+            if (parentNodes == null || parentNodes.isEmpty() || node.equals(rootNode)) {
+                break;
             }
-
-            while (node != null) {
-                UsefulFunction.fillUpMap(map, pathNumber, node.getNumber());
-
-                List<Integer> parentNodes = node.getParents();
-
-                if (parentNodes == null || parentNodes.isEmpty() || node.equals(rootNode)) {
-                    break;
-                }
-                else {
-                    node = getNodeNumberIsNotInThread(node);
-                }
+            else {
+                node = getNodeNumberIsNotInThread(node);
             }
+        }
 
-            List<Integer> listOfMap = map.get(pathNumber);
-            // [listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
-            DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
+        List<Integer> listOfMap = map.get(pathNumber);
+        // [listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
+        DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
 
-            DekstraNode readyListOfMapStartNode = getMeanNodeOfReadyListOfMap(nextNode, listOfMap);
-            List<Integer> readyListOfMap = getReadyListOfMap(readyListOfMapStartNode, listOfMap);
+        DekstraNode readyListOfMapStartNode = getMeanNodeOfReadyListOfMap(nextNode, listOfMap);
+        List<Integer> readyListOfMap = getReadyListOfMap(readyListOfMapStartNode, listOfMap);
 
-            if (readyListOfMapStartNode != null) {
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2(readyListOfMapStartNode, readyListOfMap, nodesCheckers)));
-            }
-
-        } //synchronized
-
-        return pathNumber;
+        if (readyListOfMapStartNode != null) {
+            new DekstraBackPathsFinderThread_2_TEST(readyListOfMapStartNode, readyListOfMap, nodesCheckers).CALL();
+        }
     }
 
     private List<Integer> getReadyListOfMap(DekstraNode readyListOfMapStartNode, List<Integer> listOfMap)
@@ -109,7 +98,9 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
             }
         }
 
-        return readyListOfMap.isEmpty() ? null : readyListOfMap;
+        return readyListOfMap.isEmpty()
+               ? null
+               : readyListOfMap;
     }
 
     private DekstraNode getNodeNumberIsNotInThread(DekstraNode node)
@@ -222,88 +213,46 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         return false;
     }
 
-// @Override
-// public void run()
-// {
-// DekstraNode parentNode = null;
-//// System.out.println(Thread.currentThread().getName());
-//// System.out.println("pathNumber= " + pathNumber);
-//
-// parentNode = getNodeNumberIsNotInThread(targetNode);
-//
-// while (parentNode != null) {
-// synchronized (graph) {
-// UsefulFunction.fillUpMap(map, pathNumber, parentNode.getNumber());
-// }
-//
-// if (parentNode.getParents().isEmpty()) {
-// return; //end of back path [return ~ break]
-// }
-// else {
-// parentNode = getNodeNumberIsNotInThread(parentNode);
-// }
-// }
-//
-//// System.out.println("pathNumber end= " + pathNumber);
-// }
-
     public static void setGraph(Graph graph)
     {
-        DekstraBackPathsFinderThread_2.graph = graph;
+        DekstraBackPathsFinderThread_2_TEST.graph = graph;
     }
 
     public static void setMap(Map<Integer, List<Integer>> map)
     {
-        for (Map.Entry<Integer, List<Integer>>entry:
-    map.entrySet()){
-        List<Integer> tempList = new ArrayList<>();
-        for (Integer number : entry.getValue()) {
-            tempList.add(number);
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            List<Integer> tempList = new ArrayList<>();
+            for (Integer number : entry.getValue()) {
+                tempList.add(number);
+            }
+            DekstraBackPathsFinderThread_2_TEST.map.put(entry.getKey(), tempList);
         }
-        DekstraBackPathsFinderThread_2.map.put(entry.getKey(), tempList);
-    }
     }
 
     public static void setTargetNode(DekstraNode targetNode)
     {
-        DekstraBackPathsFinderThread_2.targetNode = targetNode;
+        DekstraBackPathsFinderThread_2_TEST.targetNode = targetNode;
     }
 
     public static void setRootNode(DekstraNode rootNode)
     {
-        DekstraBackPathsFinderThread_2.rootNode = rootNode;
-    }
-
-    public static void setFutures(List<Future<Integer>> futures)
-    {
-        DekstraBackPathsFinderThread_2.futures = new Vector(futures);
-    }
-
-    public static void setResults(List<Integer> results)
-    {
-        DekstraBackPathsFinderThread_2.results = new Vector(results);
-    }
-
-    public static void setService(ExecutorService service)
-    {
-        DekstraBackPathsFinderThread_2.service = service;
+        DekstraBackPathsFinderThread_2_TEST.rootNode = rootNode;
     }
 
     public static void printMap()
     {
         StringBuilder builder;
 
-        for (Map.Entry<Integer, List<Integer>>entry:
-    map.entrySet()){
-        builder = new StringBuilder();
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            builder = new StringBuilder();
 
-        builder.append("key: " + entry.getKey());
-        builder.append(", path: ");
-        for (Integer number : entry.getValue()) {
-            builder.append(number + ", ");
+            builder.append("key: " + entry.getKey());
+            builder.append(", path: ");
+            for (Integer number : entry.getValue()) {
+                builder.append(number + ", ");
+            }
+            System.out.println(builder.substring(0, builder.length() - 2));
         }
-        System.out.println(builder.substring(0, builder.length() - 2));
-    }
     }
 
 // public static void shutdown()

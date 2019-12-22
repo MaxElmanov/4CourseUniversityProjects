@@ -90,6 +90,7 @@ public class DekstraAlgorithm
         System.out.println("\namount back paths = " + amountAllBackPaths);
 
         //UsefulFunction.printMap(map);
+//        DekstraBackPathsFinderThread_2_TEST.printMap();
         DekstraBackPathsFinderThread_2.printMap();
     }
 
@@ -170,6 +171,9 @@ public class DekstraAlgorithm
         //multi thread finding back paths method
         getAllBackPaths_multiThreads(endNode); //sometimes 4->6 is existing only in 4 or 5 back path. Necessary to fix it
 
+        //As 1 thread example
+        //getAllBackPaths_multiThreads_TEST(endNode);
+
         //multi + recursion thread finding back paths method
         //getAllBackPaths_multiThreads_recursion(endNode);
 
@@ -205,7 +209,7 @@ public class DekstraAlgorithm
                 nextNodeWithManyParents = cleanUnnecessaryNodesFromPaths(nextNodeWithManyParents, map.get(count - 1));
             }
 
-            if(count < amountAllBackPaths) UsefulFunction.fillUpMapByList(map, count, paths);
+            if (count < amountAllBackPaths) UsefulFunction.fillUpMapByList(map, count, paths);
 
             return;
         }
@@ -323,6 +327,29 @@ public class DekstraAlgorithm
 
     }
 
+    private void getAllBackPaths_multiThreads_TEST(DekstraNode node) throws ExecutionException, InterruptedException
+    {
+        DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
+
+        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
+        DekstraBackPathsFinderThread_2_TEST.setMap(map);
+
+        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
+        DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
+        DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
+
+        node.setInThread(true);
+
+        Timer.start();
+
+        //for (Integer parentNodeNumber : node.getParents()) {
+            DekstraNode parentNode = Graph.getNodeByNumber(10);
+            new DekstraBackPathsFinderThread_2_TEST(parentNode).CALL();
+        //}
+
+        System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
+    }
+
     private void getAllBackPaths_multiThreads(DekstraNode node) throws ExecutionException, InterruptedException
     {
         DekstraBackPathsFinderThread_2.setGraph(graph);
@@ -364,6 +391,7 @@ public class DekstraAlgorithm
         //DekstraBackPathsFinderThread_2.shutdown();
 //        DekstraBackPathsFinderThread_2.printMap();
     }
+
 
     private void getAllBackPaths_multiThreads_recursion(DekstraNode node, int amountAllBackPaths) throws ExecutionException, InterruptedException
     {

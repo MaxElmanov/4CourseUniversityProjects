@@ -18,26 +18,35 @@ public class UsefulFunction
         }
     }
 
-    public static <K,V> void fillUpMap(Map<K, List<V>> map, K key, V newValue)
+    /** K - Integer, V - List<Integer>>**/
+    public static <K, V> void fillUpMap(Map<K, List<V>> map, K key, V newValue)
     {
         if (map.isEmpty()) {
             map.put(key, Arrays.asList(newValue));
             return;
         }
 
-        for (Map.Entry<K, List<V>> entry : map.entrySet()) {
-        if (entry.getKey() == key) {
-            List<V> tempList = new ArrayList<>();
+        if(map.containsKey(key)) {
+            //for case when all "pathNumbers" is filled up in the map
+            for (Map.Entry<K, List<V>> entry : map.entrySet()) {
+                if (entry.getKey() == key) {
+                    List<V> tempList = new ArrayList<>();
 
-            for (V v : entry.getValue()) {
-                tempList.add(v);
+                    for (V v : entry.getValue()) {
+                        tempList.add(v);
+                    }
+
+                    tempList.add(newValue);
+
+                    map.put(key, tempList);
+                    return;
+                }
             }
-
-            tempList.add(newValue);
-
-            map.put(key, tempList);
         }
-    }
+        else{
+            //for case when there is opportunity that map doesn't contain the key
+            map.put(key, Arrays.asList(newValue));
+        }
     }
 
     public static void fillUpMapForManyParents(Map<Integer, List<Integer>> map, int fromIndex, int newValue, int toIndex)
@@ -67,25 +76,24 @@ public class UsefulFunction
 
     public static void fillUpMapByList(Map<Integer, List<Integer>> map, int pathNumber, List<Integer> paths)
     {
-        List<Integer> tempList = new ArrayList<>();
+        List<Integer> tempList = map.get(pathNumber);
 
-        boolean wasInside = false;
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
-            if (entry.getKey() == pathNumber) {
-                wasInside = true;
-
-                for (Integer number : entry.getValue()) {
-                    if (!tempList.contains(number)) {
-                        tempList.add(number);
-                    }
-                }
-            }
-            if (wasInside) {
-                break;
+        for (Integer number : paths) {
+            if (!tempList.contains(number)) {
+                tempList.add(number);
             }
         }
 
-        for (Integer number : paths) {
+        map.put(pathNumber, tempList);
+    }
+
+    public static void fillUpMapByReverseList(Map<Integer, List<Integer>> map, int pathNumber, List<Integer> paths)
+    {
+        List<Integer> tempList = map.get(pathNumber);
+
+        for (int i = paths.size() - 1; i >= 0; i--) {
+            int number = paths.get(i);
+
             if (!tempList.contains(number)) {
                 tempList.add(number);
             }
@@ -158,6 +166,18 @@ public class UsefulFunction
     }
 
     public static Integer generateNewPathNumberOf(ConcurrentMap<Integer, List<Integer>> map, Vector<Integer> listOfUsedPathNumbers)
+    {
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            Integer key = entry.getKey();
+            if (!listOfUsedPathNumbers.contains(key)) {
+                return key;
+            }
+        }
+
+        return null;
+    }
+
+    public static Integer generateNewPathNumberOf(Map<Integer, List<Integer>> map, List<Integer> listOfUsedPathNumbers)
     {
         for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
             Integer key = entry.getKey();
