@@ -111,9 +111,10 @@ public class DekstraAlgorithm
         DekstraNode targetNode = Graph.getNodeByNumber(targetPoint);
         DekstraNode rootNode = Graph.getNodeByNumber(rootPoint);
 
-        if(!necessaryPathExists(rootNode, targetNode)) {
-            return AlertCommands.ERROR_RESULT;
-        }
+        necessaryPathExists(rootNode, targetNode);
+//        if(!necessaryPathExists(rootNode, targetNode)) {
+//            return AlertCommands.ERROR_RESULT;
+//        }
 
         amountAllBackPaths = getAmountBackPaths(rootNode, targetNode);//set global variable amo amountAllBackPaths
 
@@ -129,19 +130,32 @@ public class DekstraAlgorithm
         return AlertCommands.RIGHTS_RESULT;
     }
 
-    private boolean necessaryPathExists(DekstraNode rootNode, DekstraNode targetNode)
+    //I need to create checking for valid path existing (under method for it)
+    private List<Boolean> nextNodesWasUsed = new ArrayList<>();
+    private void necessaryPathExists(DekstraNode rootNode, DekstraNode targetNode)
     {
-        for (Integer parentNumber : rootNode.getParents()){
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNumber);
+        List<Integer> nextNodes = rootNode.getNextNodes();
 
-            if(parentNode.equals(targetNode)) {
-                return true;
-            }
-
-            return necessaryPathExists(parentNode, targetNode);
+        for (int i = 0; i < nextNodes.size(); i++){
+            nextNodesWasUsed.add(false);
         }
 
-        return false;
+        if(nextNodes == null || nextNodes.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < nextNodes.size(); i++){
+            if(nextNodesWasUsed.get(i)) continue;
+
+            DekstraNode nextNode = Graph.getNodeByNumber(nextNodes.get(i));
+            nextNodesWasUsed.set(i, true);
+
+            if(nextNode.equals(targetNode)) {
+                return;
+            }
+
+            necessaryPathExists(nextNode, targetNode);
+        }
     }
 
     private int getAmountBackPaths(DekstraNode startNode, DekstraNode endNode)

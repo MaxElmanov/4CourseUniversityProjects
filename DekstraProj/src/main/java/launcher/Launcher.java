@@ -32,6 +32,7 @@ import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import logics.DekstraAlgorithm;
+import logics.GraphDrawer;
 import logics.RandomGraphGenerator;
 import objects.Graph;
 import objects.MySpinner;
@@ -304,7 +305,8 @@ public class Launcher extends Application
             //region drawing graph
             Canvas canvas = new Canvas();
             GraphicsContext context = canvas.getGraphicsContext2D();
-            drawGraph(context);
+            GraphDrawer.drawGraph(context, graph);
+            grid.add(canvas, 2, 1, 8, 9);
             //endregion
             checkResultCommandForWarningAndError(alertCommand, "There is no such a path", grid);
         }
@@ -333,11 +335,6 @@ public class Launcher extends Application
         spinners.addAll(spinnerForRootNode, spinnerForTargetNode);
 
         return spinners;
-    }
-
-    private void drawGraph(GraphicsContext context)
-    {
-
     }
 
     private Label createNewLabel(String text, String fontFamily, FontWeight fontWeight, Double fontSize, Integer padding, HPos hPos)
