@@ -11,19 +11,20 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 {
     //static
     private static Graph graph;
-    private static ConcurrentMap<Integer, List<Integer>>map;
+    private static ConcurrentMap<Integer, List<Integer>> map;
     private static DekstraNode targetNode;
     private static DekstraNode rootNode;
-    private static Vector<Integer> listOfUsedPathNumbers;
-    private static Vector<Future<Integer>>futures;
-    private static Vector<Integer> results;
+    private static List<Integer> listOfUsedPathNumbers;
+    private static List<Thread> threadPool;
+    private static BlockingQueue<Future<Integer>> futures;
+    private static int amountAllBackPaths;
     private static ExecutorService service;
+    private static List<DekstraBackPathsFinderThread_2> threads;
 
     //object
     private DekstraNode node;
-    private DekstraNode firstParentNode;
     private Integer pathNumber = null;
-    private ConcurrentMap<Integer, List<Integer>>nodesCheckers;
+    private ConcurrentMap<Integer, List<Integer>> nodesCheckers;
     private List<Integer> readyListOfMap;
 
     static {
@@ -31,17 +32,20 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         map = new ConcurrentHashMap<>();
     }
 
-    public DekstraBackPathsFinderThread_2(DekstraNode readyListOfMapStartNode, List<Integer> readyListOfMap, ConcurrentMap<Integer, List<Integer>> nodesCheckers)
+    public DekstraBackPathsFinderThread_2(Integer pathNumber, DekstraNode readyListOfMapStartNode, List<Integer> readyListOfMap, ConcurrentMap<Integer, List<Integer>> nodesCheckers)
     {
+        this.pathNumber = pathNumber;
         this.node = readyListOfMapStartNode;
         this.nodesCheckers = nodesCheckers;
         this.readyListOfMap = readyListOfMap;
     }
 
-    public DekstraBackPathsFinderThread_2(DekstraNode nextNode)
+    public DekstraBackPathsFinderThread_2(Integer pathNumber, DekstraNode nextNode)
     {
+        this.pathNumber = pathNumber;
         this.node = nextNode;
         this.nodesCheckers = new ConcurrentHashMap<>();
+        service = Executors.newFixedThreadPool(amountAllBackPaths);
     }
 
     @Override
@@ -50,11 +54,9 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         synchronized (graph) {
             System.out.println(Thread.currentThread().getName());
 
-            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
-
-            if(pathNumber == null) return pathNumber;
-
-            listOfUsedPathNumbers.add(pathNumber);
+//            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
+//            if(pathNumber == null) return pathNumber;
+//            listOfUsedPathNumbers.add(pathNumber);
 
             if (readyListOfMap != null && !readyListOfMap.isEmpty()) {
                 UsefulFunction.fillUpMapByReverseList(map, pathNumber, readyListOfMap);
@@ -72,19 +74,7 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
                     node = getNodeNumberIsNotInThread(node);
                 }
             }
-
-            List<Integer> listOfMap = map.get(pathNumber);
-            // [listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
-            DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
-
-            DekstraNode readyListOfMapStartNode = getMeanNodeOfReadyListOfMap(nextNode, listOfMap);
-            List<Integer> readyListOfMap = getReadyListOfMap(readyListOfMapStartNode, listOfMap);
-
-            if (readyListOfMapStartNode != null) {
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2(readyListOfMapStartNode, readyListOfMap, nodesCheckers)));
-            }
-
-        } //synchronized
+        }
 
         return pathNumber;
     }
@@ -109,7 +99,9 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
             }
         }
 
-        return readyListOfMap.isEmpty() ? null : readyListOfMap;
+        return readyListOfMap.isEmpty()
+               ? null
+               : readyListOfMap;
     }
 
     private DekstraNode getNodeNumberIsNotInThread(DekstraNode node)
@@ -254,14 +246,13 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 
     public static void setMap(Map<Integer, List<Integer>> map)
     {
-        for (Map.Entry<Integer, List<Integer>>entry:
-    map.entrySet()){
-        List<Integer> tempList = new ArrayList<>();
-        for (Integer number : entry.getValue()) {
-            tempList.add(number);
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            List<Integer> tempList = new ArrayList<>();
+            for (Integer number : entry.getValue()) {
+                tempList.add(number);
+            }
+            DekstraBackPathsFinderThread_2.map.put(entry.getKey(), tempList);
         }
-        DekstraBackPathsFinderThread_2.map.put(entry.getKey(), tempList);
-    }
     }
 
     public static void setTargetNode(DekstraNode targetNode)
@@ -274,36 +265,55 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         DekstraBackPathsFinderThread_2.rootNode = rootNode;
     }
 
-    public static void setFutures(List<Future<Integer>> futures)
+    public static void setAmountAllBackPaths(int amountAllBackPaths)
     {
-        DekstraBackPathsFinderThread_2.futures = new Vector(futures);
+        DekstraBackPathsFinderThread_2.amountAllBackPaths = amountAllBackPaths;
     }
 
-    public static void setResults(List<Integer> results)
+    public static BlockingQueue<Future<Integer>> getFutures()
     {
-        DekstraBackPathsFinderThread_2.results = new Vector(results);
+        return futures;
     }
 
-    public static void setService(ExecutorService service)
+    public static void setThreads(List<DekstraBackPathsFinderThread_2> threads)
     {
-        DekstraBackPathsFinderThread_2.service = service;
+        DekstraBackPathsFinderThread_2.threads = threads;
     }
+
+    //    public static void setFutures_2(List<Future<Integer>> futures_2)
+//    {
+//        DekstraBackPathsFinderThread_2.futures_2 = new Vector<>(futures_2);
+//    }
+//
+//    public static List<Future<Integer>> getFutures_2()
+//    {
+//        return futures_2;
+//    }
+//
+//    public static void setResults(List<Integer> results)
+//    {
+//        DekstraBackPathsFinderThread_2.results = new Vector(results);
+//    }
+//
+//    public static void setService(ExecutorService service)
+//    {
+//        DekstraBackPathsFinderThread_2.service = service;
+//    }
 
     public static void printMap()
     {
         StringBuilder builder;
 
-        for (Map.Entry<Integer, List<Integer>>entry:
-    map.entrySet()){
-        builder = new StringBuilder();
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            builder = new StringBuilder();
 
-        builder.append("key: " + entry.getKey());
-        builder.append(", path: ");
-        for (Integer number : entry.getValue()) {
-            builder.append(number + ", ");
+            builder.append("key: " + entry.getKey());
+            builder.append(", path: ");
+            for (Integer number : entry.getValue()) {
+                builder.append(number + ", ");
+            }
+            System.out.println(builder.substring(0, builder.length() - 2));
         }
-        System.out.println(builder.substring(0, builder.length() - 2));
-    }
     }
 
 // public static void shutdown()

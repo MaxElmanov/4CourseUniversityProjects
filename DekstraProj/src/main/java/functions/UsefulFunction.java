@@ -2,9 +2,7 @@ package functions;
 
 import objects.DekstraNode;
 
-import java.lang.reflect.Array;
 import java.util.*;
-import java.util.concurrent.ConcurrentMap;
 
 public class UsefulFunction
 {
@@ -76,11 +74,15 @@ public class UsefulFunction
 
     public static void fillUpMapByList(Map<Integer, List<Integer>> map, int pathNumber, List<Integer> paths)
     {
-        List<Integer> tempList = map.get(pathNumber);
+        List<Integer> tempList = new ArrayList<>();
 
-        for (Integer number : paths) {
-            if (!tempList.contains(number)) {
-                tempList.add(number);
+        for (Integer numberFromMap : map.get(pathNumber)){
+            tempList.add(numberFromMap);
+        }
+
+        for (Integer numberFromPaths : paths) {
+            if (!tempList.contains(numberFromPaths)) {
+                tempList.add(numberFromPaths);
             }
         }
 
@@ -105,12 +107,28 @@ public class UsefulFunction
     public static void printMap(Map<Integer, List<Integer>> map)
     {
         for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
-            System.out.println("key = " + entry.getKey());
+            System.out.print("№" + (entry.getKey() + 1) + ": "); // +1 because index commence from zero [0]
             for (Integer nodeNumber : entry.getValue()) {
-                System.out.print(nodeNumber + "->");
+                System.out.print(nodeNumber + "➔");
             }
             System.out.println();
         }
+    }
+
+    public static String getMapContent(Map<Integer, List<Integer>> map) {
+
+        StringBuilder builder = new StringBuilder();
+
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+            builder.append("№ " + (entry.getKey() + 1) + ": "); // +1 because index commence from zero [0]
+            for (Integer nodeNumber : entry.getValue()) {
+                builder.append(nodeNumber + "➔");
+            }
+            builder = new StringBuilder(builder.substring(0, builder.length() - 1));
+            builder.append(System.lineSeparator());
+        }
+
+        return builder.toString();
     }
 
     public static void printList(List<Integer> list)
@@ -165,7 +183,7 @@ public class UsefulFunction
         return false;
     }
 
-    public static Integer generateNewPathNumberOf(ConcurrentMap<Integer, List<Integer>> map, Vector<Integer> listOfUsedPathNumbers)
+    public synchronized static Integer generateNewPathNumberOf(Map<Integer, List<Integer>>map, List<Integer> listOfUsedPathNumbers)
     {
         for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
             Integer key = entry.getKey();
@@ -177,15 +195,21 @@ public class UsefulFunction
         return null;
     }
 
-    public static Integer generateNewPathNumberOf(Map<Integer, List<Integer>> map, List<Integer> listOfUsedPathNumbers)
+    public static Integer generateNewPathNumberRangeFrom0To(Integer amountAllBackPaths, List<Integer> listOfUsedPathNumbers)
     {
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
-            Integer key = entry.getKey();
-            if (!listOfUsedPathNumbers.contains(key)) {
-                return key;
+        for (int i = 0; i <= amountAllBackPaths; i++) {
+            if (!listOfUsedPathNumbers.contains(i)) {
+                return i;
             }
         }
 
         return null;
+    }
+
+    public static void fillUpListByReverseCollection(List<Integer> listOfMap, List<Integer> readyListOfMap)
+    {
+        for (int i = readyListOfMap.size() - 1; i >= 0; i--) {
+            listOfMap.add(readyListOfMap.get(i));
+        }
     }
 }

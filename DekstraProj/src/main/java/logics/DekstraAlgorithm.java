@@ -1,5 +1,6 @@
 package logics;
 
+import constants.AlertCommands;
 import constants.Constants;
 import functions.Timer;
 import functions.UsefulFunction;
@@ -21,6 +22,9 @@ public class DekstraAlgorithm
 
     //finding all back paths by 1 thread
     private static Map<Integer, List<Integer>> map;
+    private static List<DekstraBackPathsFinderThread_2> threads;
+    private static List<Integer> listOfUsedPathNumbers;
+
     private List<Integer> paths;
     private int count;
     private int amountAllBackPaths;
@@ -30,14 +34,33 @@ public class DekstraAlgorithm
     private List<Future<Integer>> futures;
     private List<Integer> results;
 
+    static{
+        listOfUsedPathNumbers = new ArrayList<>();
+        threads = new ArrayList<>();
+        map = new HashMap<>();
+    }
+
     public DekstraAlgorithm(Graph graph)
     {
         this.graph = graph;
-
         futures = new ArrayList<>();
         results = new ArrayList<>();
-        map = new HashMap<>();
         paths = new ArrayList<>();
+    }
+
+    public int getAmountAllBackPaths()
+    {
+        return amountAllBackPaths;
+    }
+
+    public static Map<Integer, List<Integer>> getMap()
+    {
+        return map;
+    }
+
+    public String getBestPathWeight()
+    {
+        return String.valueOf(Graph.getNodeByNumber(endPoint).getBestWeight());
     }
 
     private void init(int startPoint, int endPoint)
@@ -54,20 +77,25 @@ public class DekstraAlgorithm
         }
     }
 
-    public void DO(int startPoint, int endPoint) throws ExecutionException, InterruptedException
+    public AlertCommands DO(int rootPoint, int targetPoint) throws ExecutionException, InterruptedException
     {
-        init(startPoint, endPoint);
+        init(rootPoint, targetPoint);
 
         while (true) {
             DekstraNode minWeightNode = getMinWeightNode();
 
-            if (minWeightNode.getNumber() == endPoint) {
+            if (minWeightNode.getNumber() == targetPoint) {
                 System.out.println("Algorithm is finished");
-                System.out.println("minimal path from " + startPoint + " to " + endPoint + " = <" + Graph.getNodeByNumber(endPoint).getBestWeight() + ">\n");
+                System.out.println("minimal path from " + rootPoint + " to " + targetPoint + " = <" + Graph.getNodeByNumber(targetPoint).getBestWeight() + ">\n");
                 break;
             }
 
             List<Integer> nextNodes = minWeightNode.getNextNodes();
+
+            if(nextNodes == null || nextNodes.isEmpty()) {
+                return AlertCommands.ERROR_RESULT;
+            }
+
             List<Integer> weightsToNextNodes = minWeightNode.getWeights();
             for (int i = 0; i < nextNodes.size(); i++) {
                 DekstraNode currentNode = Graph.getNodeByNumber(nextNodes.get(i));
@@ -80,18 +108,40 @@ public class DekstraAlgorithm
             }
         }
 
-        DekstraNode endNode = Graph.getNodeByNumber(endPoint);
-        DekstraNode startNode = Graph.getNodeByNumber(startPoint);
-        amountAllBackPaths = getAmountBackPaths(startNode, endNode);//set global variable amo amountAllBackPaths
+        DekstraNode targetNode = Graph.getNodeByNumber(targetPoint);
+        DekstraNode rootNode = Graph.getNodeByNumber(rootPoint);
+
+        if(!necessaryPathExists(rootNode, targetNode)) {
+            return AlertCommands.ERROR_RESULT;
+        }
+
+        amountAllBackPaths = getAmountBackPaths(rootNode, targetNode);//set global variable amo amountAllBackPaths
 
         //time counter function
-        pinpoint_time(endNode);
+        pinpoint_time(targetNode);
 
         System.out.println("\namount back paths = " + amountAllBackPaths);
 
-        //UsefulFunction.printMap(map);
+        UsefulFunction.printMap(map);
 //        DekstraBackPathsFinderThread_2_TEST.printMap();
-        DekstraBackPathsFinderThread_2.printMap();
+        //DekstraBackPathsFinderThread_2.printMap();
+
+        return AlertCommands.RIGHTS_RESULT;
+    }
+
+    private boolean necessaryPathExists(DekstraNode rootNode, DekstraNode targetNode)
+    {
+        for (Integer parentNumber : rootNode.getParents()){
+            DekstraNode parentNode = Graph.getNodeByNumber(parentNumber);
+
+            if(parentNode.equals(targetNode)) {
+                return true;
+            }
+
+            return necessaryPathExists(parentNode, targetNode);
+        }
+
+        return false;
     }
 
     private int getAmountBackPaths(DekstraNode startNode, DekstraNode endNode)
@@ -148,6 +198,8 @@ public class DekstraAlgorithm
                         minWeightNode = insideNode;
                     }
                 }
+
+                break;
             }
         }
 
@@ -160,16 +212,16 @@ public class DekstraAlgorithm
     {
         //TimeUnit time = TimeUnit.NANOSECONDS;
 
-        //Timer.start();
+        Timer.start();
 
         //1 thread with recursion finding back paths method
-        //getAllBackPaths_Pre_Recursion(endNode);
+        getAllBackPaths_Pre_Recursion(endNode);
 
         //1 thread finding back paths method
         //getAllBackPaths(endNode);
 
         //multi thread finding back paths method
-        getAllBackPaths_multiThreads(endNode); //sometimes 4->6 is existing only in 4 or 5 back path. Necessary to fix it
+        //getAllBackPaths_multiThreads(endNode); //sometimes 4->6 is existing only in 4 or 5 back path. Necessary to fix it
 
         //As 1 thread example
         //getAllBackPaths_multiThreads_TEST(endNode);
@@ -179,7 +231,7 @@ public class DekstraAlgorithm
 
         //Thread.sleep(2000);
 
-        //System.out.println("Spent time = " + (Timer.stop()) + " mcs");
+        System.out.println("Spent time = " + (Timer.stop()) + " mcs");
     }
 
     private void getAllBackPaths_Pre_Recursion(DekstraNode node)
@@ -327,59 +379,78 @@ public class DekstraAlgorithm
 
     }
 
-    private void getAllBackPaths_multiThreads_TEST(DekstraNode node) throws ExecutionException, InterruptedException
-    {
-        DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
-
-        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
-        DekstraBackPathsFinderThread_2_TEST.setMap(map);
-
-        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
-        DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
-        DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
-
-        node.setInThread(true);
-
-        Timer.start();
-
-        //for (Integer parentNodeNumber : node.getParents()) {
-            DekstraNode parentNode = Graph.getNodeByNumber(10);
-            new DekstraBackPathsFinderThread_2_TEST(parentNode).CALL();
-        //}
-
-        System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
-    }
+//    private void getAllBackPaths_multiThreads_TEST(DekstraNode node) throws ExecutionException, InterruptedException
+//    {
+//        DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
+//
+//        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
+//        DekstraBackPathsFinderThread_2_TEST.setMap(map);
+//
+//        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
+//        DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
+//        DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
+//
+//        node.setInThread(true);
+//
+//        Timer.start();
+//
+//        //for (Integer parentNodeNumber : node.getParents()) {
+//            DekstraNode parentNode = Graph.getNodeByNumber(10);
+//            new DekstraBackPathsFinderThread_2_TEST(parentNode).CALL();
+//        //}
+//
+//        System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
+//    }
 
     private void getAllBackPaths_multiThreads(DekstraNode node) throws ExecutionException, InterruptedException
     {
         DekstraBackPathsFinderThread_2.setGraph(graph);
+        DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
+
+        DekstraBackPathsFinderThread_2.setAmountAllBackPaths(amountAllBackPaths);
+        DekstraBackPathsFinderThread_2_TEST.setAmountAllBackPaths(amountAllBackPaths);
 
         UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
         DekstraBackPathsFinderThread_2.setMap(map);
 
         DekstraBackPathsFinderThread_2.setTargetNode(node);
+        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
+
         DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
         DekstraBackPathsFinderThread_2.setRootNode(rootNode);
+        DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
+
+        DekstraBackPathsFinderThread_2.setThreads(threads);
+        DekstraBackPathsFinderThread_2_TEST.setThreads(threads);
+
+        DekstraBackPathsFinderThread_2_TEST.setListOfUsedPathNumbers(listOfUsedPathNumbers);
 
         service = Executors.newFixedThreadPool(node.getParents().size());
-        DekstraBackPathsFinderThread_2.setService(service);
-
-        DekstraBackPathsFinderThread_2.setFutures(futures);
-        DekstraBackPathsFinderThread_2.setResults(results);
 
         node.setInThread(true);
-//        List<Thread> threads = new ArrayList<>();
 
         Timer.start();
 
+        for (Integer parentNodeNumber : node.getParents()) {
+            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+            //futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
+
+            //generate new pathNumber
+            Integer pathNumber = UsefulFunction.generateNewPathNumberRangeFrom0To(amountAllBackPaths, listOfUsedPathNumbers);
+            if(pathNumber == null) break;
+            listOfUsedPathNumbers.add(pathNumber);
+            //----------------------------------
+
+            threads.add(new DekstraBackPathsFinderThread_2(pathNumber, parentNode));
+            new DekstraBackPathsFinderThread_2_TEST(pathNumber, parentNode).CALL();
+        }
+
         try {
-            for (Integer parentNodeNumber : node.getParents()) {
-                DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-                futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
+            for (DekstraBackPathsFinderThread_2 thread : threads){
+                futures.add(service.submit(thread));
             }
-            for (Future<Integer> future : futures) {
-//                results.add(future.get());
-                 future.get();
+            for (Future<Integer> future : futures){
+                future.get();
             }
         }
         finally {
@@ -387,25 +458,5 @@ public class DekstraAlgorithm
         }
 
         System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
-
-        //DekstraBackPathsFinderThread_2.shutdown();
-//        DekstraBackPathsFinderThread_2.printMap();
-    }
-
-
-    private void getAllBackPaths_multiThreads_recursion(DekstraNode node, int amountAllBackPaths) throws ExecutionException, InterruptedException
-    {
-        DekstraBackPathsFinderThread.setGraph(graph);
-        DekstraBackPathsFinderThread.setMap(map);
-        DekstraBackPathsFinderThread.setAmountBackPaths(amountAllBackPaths);
-        DekstraBackPathsFinderThread.pre_run(amountAllBackPaths);
-        Integer numberMapElement = 0;
-
-        Timer.start();
-        DekstraBackPathsFinderThread.generate(node.getNumber(), numberMapElement);
-
-        DekstraBackPathsFinderThread.shutdown();
-
-        System.out.println("multiThreads_recursion. Inside function spent time = " + Timer.stop() + " mcs");
     }
 }

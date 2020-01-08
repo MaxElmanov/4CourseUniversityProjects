@@ -2,7 +2,7 @@ package objects;
 
 import functions.UsefulFunction;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class Graph
@@ -11,7 +11,7 @@ public class Graph
 
     public Graph()
     {
-        nodes = new LinkedList<>();
+        nodes = new ArrayList<>();
     }
 
     public Graph(List<DekstraNode> nodes)
@@ -37,7 +37,7 @@ public class Graph
             }
         }
 
-//        UsefulFunction.throwException("The node with such number is not there");
+        UsefulFunction.throwException("The node with such number is not there");
         return null;
     }
 
