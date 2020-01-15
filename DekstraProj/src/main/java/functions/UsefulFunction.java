@@ -1,8 +1,10 @@
 package functions;
 
 import objects.DekstraNode;
+import objects.Graph;
 
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class UsefulFunction
 {
@@ -16,7 +18,9 @@ public class UsefulFunction
         }
     }
 
-    /** K - Integer, V - List<Integer>>**/
+    /**
+     * K - Integer, V - List<Integer>>
+     **/
     public static <K, V> void fillUpMap(Map<K, List<V>> map, K key, V newValue)
     {
         if (map.isEmpty()) {
@@ -24,7 +28,7 @@ public class UsefulFunction
             return;
         }
 
-        if(map.containsKey(key)) {
+        if (map.containsKey(key)) {
             //for case when all "pathNumbers" is filled up in the map
             for (Map.Entry<K, List<V>> entry : map.entrySet()) {
                 if (entry.getKey() == key) {
@@ -41,7 +45,7 @@ public class UsefulFunction
                 }
             }
         }
-        else{
+        else {
             //for case when there is opportunity that map doesn't contain the key
             map.put(key, Arrays.asList(newValue));
         }
@@ -76,7 +80,7 @@ public class UsefulFunction
     {
         List<Integer> tempList = new ArrayList<>();
 
-        for (Integer numberFromMap : map.get(pathNumber)){
+        for (Integer numberFromMap : map.get(pathNumber)) {
             tempList.add(numberFromMap);
         }
 
@@ -115,7 +119,8 @@ public class UsefulFunction
         }
     }
 
-    public static String getMapContent(Map<Integer, List<Integer>> map) {
+    public static String getMapContent(Map<Integer, List<Integer>> map)
+    {
 
         StringBuilder builder = new StringBuilder();
 
@@ -131,9 +136,9 @@ public class UsefulFunction
         return builder.toString();
     }
 
-    public static void printList(List<Integer> list)
+    public static <T> void printList(List<T> list)
     {
-        for (Integer nodeNumber : list) {
+        for (T nodeNumber : list) {
             System.out.print(nodeNumber + "->");
         }
         System.out.println();
@@ -174,7 +179,7 @@ public class UsefulFunction
         return -1;
     }
 
-    public static boolean elementExistsIn(List<Integer> list, int element)
+    public static boolean listContainsElement(List<Integer> list, int element)
     {
         if (list.contains(element)) {
             return true;
@@ -183,7 +188,22 @@ public class UsefulFunction
         return false;
     }
 
-    public synchronized static Integer generateNewPathNumberOf(Map<Integer, List<Integer>>map, List<Integer> listOfUsedPathNumbers)
+    public static boolean listContainsAllElements(List<Integer> listToSearch, List<Integer> listWithElements)
+    {
+        if (listToSearch == null || listToSearch.isEmpty() || listWithElements == null || listWithElements.isEmpty()) {
+            return false;
+        }
+
+        for (Integer nextNodeNumber : listWithElements) {
+            if (!listToSearch.contains(nextNodeNumber)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    public synchronized static Integer generateNewPathNumberOf(Map<Integer, List<Integer>> map, List<Integer> listOfUsedPathNumbers)
     {
         for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
             Integer key = entry.getKey();
@@ -206,10 +226,45 @@ public class UsefulFunction
         return null;
     }
 
-    public static void fillUpListByReverseCollection(List<Integer> listOfMap, List<Integer> readyListOfMap)
+    public static void fillUpListByReverseCollection(List<Integer> list, List<Integer> listToAdd)
     {
-        for (int i = readyListOfMap.size() - 1; i >= 0; i--) {
-            listOfMap.add(readyListOfMap.get(i));
+        if (listToAdd == null || listToAdd.isEmpty()) return;
+
+        if (list == null || list.isEmpty()) {
+            for (int i = listToAdd.size() - 1; i >= 0; i--) {
+                list.add(listToAdd.get(i));
+            }
         }
+        else {
+            for (int i = listToAdd.size() - 1; i >= 0; i--) {
+                list.add(listToAdd.get(i));
+            }
+        }
+    }
+
+    public static <T> void fillUpListByCollection(List<T> list, List<T> listToAdd)
+    {
+        if (listToAdd == null || listToAdd.isEmpty()) return;
+
+        if (list == null || list.isEmpty()) {
+            for (int i = 0; i < listToAdd.size(); i++) {
+                list.add(listToAdd.get(i));
+            }
+        }
+        else {
+            list.addAll(listToAdd);
+        }
+    }
+
+    public static List<Integer> getListElementsWhichExistIn(List<Integer> listWithNecessaryElements, List<Integer> list)
+    {
+        List<Integer> tempList = new CopyOnWriteArrayList<>();
+        for(Integer value : list){
+            if(UsefulFunction.listContainsElement(listWithNecessaryElements, value)) {
+                tempList.add(value);
+            }
+        }
+
+        return tempList;
     }
 }

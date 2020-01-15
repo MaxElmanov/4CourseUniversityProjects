@@ -15,6 +15,7 @@ public class RandomGraphGenerator
     private Integer nodesAmount;
     private Integer edgesAmount;
     private Integer remainedEdgesAmount;
+    private Integer singleNodeEdgesAmount;
     private Integer weightRangeFrom;
     private Integer weightRangeTo;
     private List<DekstraNode> nodes;
@@ -27,6 +28,7 @@ public class RandomGraphGenerator
         nodes = new ArrayList<>(nodesAmount);
         this.edgesAmount = edgesAmount;
         this.remainedEdgesAmount = edgesAmount;
+        this.singleNodeEdgesAmount = nodesAmount; //edges amount which single node can point on = general nodes amount
         edges = new ArrayList<>(edgesAmount);
         this.weightRangeFrom = weightsValuesRange_FROM;
         this.weightRangeTo = weightsValuesRange_TO;
@@ -35,7 +37,12 @@ public class RandomGraphGenerator
     public AlertCommands generate()
     {
         if(weightRangeFrom > weightRangeTo){
-            return AlertCommands.WARNING_RESULT;
+            return AlertCommands.ERROR_RESULT;
+        }
+
+        //max "edgesAmount" may equals "nodesAmount^2". Right [edgesAmount <= nodesAmount^2]
+        if(edgesAmount > Math.pow(nodesAmount, 2)){
+            return AlertCommands.ERROR_RESULT;
         }
 
         for (int i = 0; i < nodesAmount; i++) {
@@ -43,7 +50,9 @@ public class RandomGraphGenerator
 
             //region Next nodes numbers generation
             List<Integer> nextNodesNumbers = new ArrayList<>();
-            for (int j = 0; j < getRandomNextNodesAmount(); j++) {
+            int nextNodeAmount = getRandomNextNodesAmount(i);
+            for (int j = 0; j < nextNodeAmount; j++) {
+                //"nextNode" getting (it can be "nodeNumber" itself)
                 int randomNextNodeNumber = getRandomNodeNumber();
 
                 while (nextNodesNumbers.contains(randomNextNodeNumber)) {
@@ -74,16 +83,23 @@ public class RandomGraphGenerator
         return randomWeight;
     }
 
-    private Integer getRandomNextNodesAmount()
+    private Integer getRandomNextNodesAmount(int loopInterator)
     {
-        int randomNextNodeAmount = new Random().nextInt(nodesAmount + 1);
-        if(randomNextNodeAmount <= remainedEdgesAmount) {
-            remainedEdgesAmount -= randomNextNodeAmount;
-            return randomNextNodeAmount;
+        //last node must contains all remaining edges to use all entered edges
+        if((loopInterator + 1) == nodesAmount) {
+            return remainedEdgesAmount;
         }
-        else{
-            return Math.max(randomNextNodeAmount - remainedEdgesAmount, 0);
+
+        int randomNextNodeAmount = new Random().nextInt(remainedEdgesAmount + 1);
+
+        //check for max allowed edges amount for single node
+        if(randomNextNodeAmount > singleNodeEdgesAmount) {
+            randomNextNodeAmount = singleNodeEdgesAmount;
         }
+
+        remainedEdgesAmount -= randomNextNodeAmount;
+
+        return randomNextNodeAmount;
     }
 
     private Integer getRandomNodeNumberExcept(Integer exceptNodeNumber)

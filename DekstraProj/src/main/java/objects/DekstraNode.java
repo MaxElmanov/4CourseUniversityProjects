@@ -5,6 +5,12 @@ import java.util.List;
 
 public class DekstraNode extends Node
 {
+    //canvas UI
+    private double X;
+    private double Y;
+    private boolean setUpOnCanvas;
+    private boolean madeCurveLine;
+
     private Node node;
     private List<Integer> parents;
     private Integer bestWeight;
@@ -23,6 +29,43 @@ public class DekstraNode extends Node
         this.node = node;
         parents = new ArrayList<>();
         parentsCorrespondingCheckers = new ArrayList<>();
+        setUpOnCanvas = false;
+        madeCurveLine = false;
+    }
+
+    public double getX()
+    {
+        return X;
+    }
+    public void setX(double x)
+    {
+        X = x;
+    }
+    public double getY()
+    {
+        return Y;
+    }
+    public void setY(double y)
+    {
+        Y = y;
+    }
+
+    public boolean isSetUpOnCanvas()
+    {
+        return setUpOnCanvas;
+    }
+    public void setUpOnCanvas(boolean setUpOnCanvas)
+    {
+        this.setUpOnCanvas = setUpOnCanvas;
+    }
+
+    public boolean madeCurveLine()
+    {
+        return madeCurveLine;
+    }
+    public void setMadeCurveLine(boolean madeCurveLine)
+    {
+        this.madeCurveLine = madeCurveLine;
     }
 
     public List<Integer> getParents()
@@ -97,6 +140,11 @@ public class DekstraNode extends Node
     public void addBackPathIndex(int index)
     {
         backPathIndex += index;
+    }
+
+    public void setBackPathIndex(int value)
+    {
+        backPathIndex = value;
     }
 
     public int getBackPathIndex()

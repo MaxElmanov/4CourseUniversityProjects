@@ -1,5 +1,7 @@
 package files;
 
+import constants.AlertCommands;
+import constants.Constants;
 import objects.DekstraNode;
 import objects.Graph;
 import objects.Node;
@@ -20,11 +22,16 @@ public class FileExecutorForMatrixAdjacency
         this.file = file;
     }
 
-    public void fillUp(Graph graph) throws IOException
+    public AlertCommands fillUp(Graph graph) throws IOException
     {
+        //before every reading from file need to clear graph
         graph.Nodes().clear();
 
         List<String> stringList = getContent();
+
+        if(stringList.isEmpty() || stringList.size() == 0) {
+            return AlertCommands.ERROR_RESULT;
+        }
 
         for (int i = 0; i < stringList.size(); i++) {
             String oneStr = stringList.get(i);
@@ -67,6 +74,8 @@ public class FileExecutorForMatrixAdjacency
                 graph.add(new DekstraNode(new Node(nodeNumber, nextNodes, nextNodesWeights)));
             }
         }
+
+        return AlertCommands.RIGHTS_RESULT;
     }
 
     private List<String> getContent()
@@ -76,8 +85,10 @@ public class FileExecutorForMatrixAdjacency
         try (FileReader fileReader = new FileReader(file)) {
             BufferedReader reader = new BufferedReader(fileReader);
             String str = null;
-            while ((str = reader.readLine()) != null) {
+            int lineNumber = 1;
+            while ((str = reader.readLine()) != null && lineNumber <= Constants.MAX_GENERATED_NUMBER) {
                 stringList.add(str);
+                lineNumber++;
             }
         }
         catch (UnsupportedEncodingException e) {

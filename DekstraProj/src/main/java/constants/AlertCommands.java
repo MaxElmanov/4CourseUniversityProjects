@@ -2,9 +2,9 @@ package constants;
 
 public enum AlertCommands
 {
-    RIGHTS_RESULT("(INFORMATION) Right execution. command successfully completed"),
-    WARNING_RESULT("(WARNING) Command may completed unsuccessfully"),
-    ERROR_RESULT("(ERROR) Wrong command completion");
+    RIGHTS_RESULT("(INFORMATION) Command successfully completed."),
+    WARNING_RESULT("(WARNING) Command may completed unsuccessfully."),
+    ERROR_RESULT("(ERROR) Wrong command completed.");
     
     private String command;
 
