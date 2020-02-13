@@ -13,30 +13,17 @@ import objects.Graph;
 
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GraphDrawer
 {
-    private static GraphicsContext gc;
     private static Graph graph;
-    private static Canvas canvas;
     private static Pane pane;
-    private static double spacingInRow;
-    private static double spacingInColumn;
 
-    private static boolean[][] cellsOnCanvas = new boolean[Constants.NODE_AMOUNT_IN_ROW][Constants.NODE_AMOUNT_IN_COLUMN];
-
-    private static void init(Canvas canvas, GraphicsContext context, Pane pane, Graph graph)
+    private static void init(Pane pane, Graph graph)
     {
-        GraphDrawer.gc = context;
         GraphDrawer.graph = graph;
-        GraphDrawer.canvas = canvas;
         GraphDrawer.pane = pane;
-
-        //instead of WEIGHT value can be used HEIGHT. It doesn't matter.
-        GraphDrawer.spacingInRow = ((Constants.SCREEN_WEIGHT * Constants.CANVAS_WEIGHT_IN_PERCENT) - (Constants.NODE_AMOUNT_IN_ROW * Constants.NODE_RADIUS)) / Constants.SPACING_AMOUNT_IN_ROW;
-        GraphDrawer.spacingInColumn = ((Constants.SCREEN_HEIGHT * Constants.CANVAS_HEIGHT_IN_PERCENT) - (Constants.NODE_AMOUNT_IN_COLUMN * Constants.NODE_RADIUS)) / Constants.SPACING_AMOUNT_IN_COLUMN;
-
-
     }
 
 //    public static void drawGraphEdges(Canvas canvas, GraphicsContext gc, Graph graph)
@@ -96,7 +83,7 @@ public class GraphDrawer
 
     public static void drawGraphEdges(Graph graph, Pane pane)
     {
-        init(null, null, pane, graph);
+        init(pane, graph);
 
         //region Edges drawing
         for (DekstraNode startNode : graph.Nodes()) {
@@ -124,6 +111,7 @@ public class GraphDrawer
                     circleOneNodeEdge.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
                     int weight = startNode.getWeights().get(nextNodeIndex);
                     Text nodeWeight_txt = getEdgeWeightForCircleLineAsText(circleCenterX, circleCenterY, Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS, weight);
+                    //Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
                     pane.getChildren().addAll(circleOneNodeEdge, nodeWeight_txt);
                     //endregion
                 }
@@ -138,7 +126,8 @@ public class GraphDrawer
                     double biasedCoordX = polylinePoints[2];
                     double biasedCoordY = polylinePoints[3];
                     Text nodeWeight_txt = getEdgeWeightForCurveLineAsText(biasedCoordX, biasedCoordY, weight);
-                    pane.getChildren().addAll(polyline, nodeWeight_txt);
+                    Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
+                    pane.getChildren().addAll(polyline, nodeWeight_txt, lineTip);
                     //endregion
                 }
                 else {
@@ -148,12 +137,257 @@ public class GraphDrawer
                     line.setStroke(Constants.EDGE_COLOR);
                     int weight = startNode.getWeights().get(nextNodeIndex);
                     Text nodeWeight_txt = getEdgeWeightForDirectLineAsText(startX, startY, endX, endY, weight);
-                    pane.getChildren().addAll(line, nodeWeight_txt);
+                    //Tip getting
+                    Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
+                    pane.getChildren().addAll(line, nodeWeight_txt, lineTip);
                     //endregion
                 }
             }
         }
         //endregion
+    }
+
+    private static Polyline getTipPolyline(double startX, double startY, double endX, double endY)
+    {
+        double leftTipX = 0, leftTipY = 0, rightTipX = 0, rightTipY = 0, newEndX = 0, newEndY = 0;
+
+        double pointsHeight = 0, pointsWeight = 0, lineCenterX = 0, lineCenterY = 0;
+        //region Height and weight getting and line coordinates center
+        if (startX <= endX) {
+            pointsWeight = endX - startX;
+            lineCenterX = pointsWeight / 2 + startX;
+        }
+        else {
+            pointsWeight = startX - endX;
+            lineCenterX = pointsWeight / 2 + endX;
+        }
+
+        if (startY <= endY) {
+            pointsHeight = endY - startY;
+            lineCenterY = pointsHeight / 2 + startY;
+        }
+        else {
+            pointsHeight = startY - endY;
+            lineCenterY = pointsHeight / 2 + endY;
+        }
+        //endregion
+
+        double degree = getAngleDirectionToCenterInDegrees(startX, startY, endX, endY);
+
+        //Calculate direction. get what side arrow will point? BOTTOM and RIGHT is not necessary because ,for example, if UP is true then BOTTOM is false, etc
+        //boolean isUp = isDirectUp(startY, endY);
+        //boolean isLeft = isDirectLeft(startX, endX);
+
+        //region Arrow left and right tips coordinates getting
+        if (degree == Constants.DEGREES_0 || degree == Constants.DEGREES_360) {
+            //region Horizontal direct 0
+            newEndX = endX + Constants.NODE_RADIUS;
+            newEndY = endY;
+            leftTipX = newEndX + Constants.DISTANCE_FROM_LINE_ARROW_TIP;
+            leftTipY = newEndY + Constants.SIDE_DISTANCE_FROM_LINE;
+            rightTipX = leftTipX;
+            rightTipY = newEndY - Constants.SIDE_DISTANCE_FROM_LINE;
+            //endregion
+        }
+        else if (degree == Constants.DEGREES_90) { // vertical direct 90
+            //region Vertical direct 90
+            newEndX = endX;
+            newEndY = endY - Constants.NODE_RADIUS;
+            leftTipX = newEndX - Constants.SIDE_DISTANCE_FROM_LINE;
+            leftTipY = newEndY + Constants.DISTANCE_FROM_LINE_ARROW_TIP;
+            rightTipX = newEndX + Constants.SIDE_DISTANCE_FROM_LINE;
+            rightTipY = leftTipY;
+            //endregion
+        }
+        if (degree == Constants.DEGREES_180) { // horizontal direct 180
+            //region Horizontal direct 180
+            newEndX = endX - Constants.NODE_RADIUS;
+            newEndY = endY;
+            leftTipX = newEndX - Constants.DISTANCE_FROM_LINE_ARROW_TIP;
+            leftTipY = newEndY - Constants.SIDE_DISTANCE_FROM_LINE;
+            rightTipX = leftTipX;
+            rightTipY = newEndY + Constants.SIDE_DISTANCE_FROM_LINE;
+            //endregion
+        }
+        else if (degree == Constants.DEGREES_270) { // vertical direct 270
+            //region Vertical direct 270
+            newEndX = endX;
+            newEndY = endY + Constants.NODE_RADIUS;
+            leftTipX = newEndX - Constants.SIDE_DISTANCE_FROM_LINE;
+            leftTipY = newEndY - Constants.DISTANCE_FROM_LINE_ARROW_TIP;
+            rightTipX = newEndX + Constants.SIDE_DISTANCE_FROM_LINE;
+            rightTipY = leftTipY;
+            //endregion
+        }
+        else if (degree > Constants.DEGREES_0 && degree < Constants.DEGREES_90) {
+            //region 0-90
+            double radiusOffsetX = Constants.NODE_RADIUS * Math.cos(Math.toRadians(degree));
+            newEndX = endX + radiusOffsetX;
+            double radiusOffsetY = Constants.NODE_RADIUS * Math.sin(Math.toRadians(degree));
+            newEndY = endY - radiusOffsetY;
+            //arrowHypotenuse is identical for arrow left and right sides
+            double arrowHypotenuse = Math.sqrt(Math.pow(Constants.DISTANCE_FROM_LINE_ARROW_TIP, 2) + Math.pow(Constants.SIDE_DISTANCE_FROM_LINE, 2));
+            leftTipX = newEndX + arrowHypotenuse;
+            leftTipY = newEndY;
+            rightTipX = newEndX;
+            rightTipY = newEndY - arrowHypotenuse;
+
+            //LEFT
+            double leftTipOffsetY = Math.sin(Math.toRadians(Constants.DEGREES_45_ARROW_TIP_ANGLE - degree)) * arrowHypotenuse;
+            leftTipY += leftTipOffsetY;
+            double leftTipOffsetX = (leftTipX - newEndX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(leftTipOffsetY, 2)));
+            leftTipX -= leftTipOffsetX;
+            //RIGHT
+            double rightTipOffsetX = Math.sin(Math.toRadians(Constants.DEGREES_90 - Constants.DEGREES_45_ARROW_TIP_ANGLE - degree)) * arrowHypotenuse;
+            rightTipX += rightTipOffsetX;
+            double rightTipOffsetY = (newEndY - rightTipY) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetX, 2)));
+            rightTipY += rightTipOffsetY;
+            //endregion
+        }
+        else if (degree > Constants.DEGREES_90 && degree < Constants.DEGREES_180) {
+            //region 90-180
+            double newDegrees = Constants.DEGREES_180 - degree;
+            newEndX = endX - Constants.NODE_RADIUS * Math.cos(Math.toRadians(newDegrees));
+            newEndY = endY - Constants.NODE_RADIUS * Math.sin(Math.toRadians(newDegrees));
+            //arrowHypotenuse is identical for left and right sides
+            double arrowHypotenuse = Math.sqrt(Math.pow(Constants.DISTANCE_FROM_LINE_ARROW_TIP, 2) + Math.pow(Constants.SIDE_DISTANCE_FROM_LINE, 2));
+            leftTipX = newEndX;
+            leftTipY = newEndY - arrowHypotenuse;
+            rightTipX = newEndX - arrowHypotenuse;
+            rightTipY = newEndY;
+
+            double quarterDegree = degree - Constants.DEGREES_90;
+            //LEFT
+            double leftTipOffsetX = Math.sin(Math.toRadians(quarterDegree - Constants.DEGREES_45_ARROW_TIP_ANGLE)) * arrowHypotenuse;
+            leftTipX -= leftTipOffsetX;
+            double leftTipOffsetY = (newEndY - leftTipY) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(leftTipOffsetX, 2)));
+            leftTipY += leftTipOffsetY;
+            //RIGHT
+            if(quarterDegree < 45) {
+                double rightTipOffsetY = Math.sin(Math.toRadians(Constants.DEGREES_90 - quarterDegree - Constants.DEGREES_45_ARROW_TIP_ANGLE)) * arrowHypotenuse;
+                rightTipY -= rightTipOffsetY;
+                double rightTipOffsetX = (newEndX - rightTipX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetY, 2)));
+                rightTipX += rightTipOffsetX;
+            }
+            //quarterDegree >= 45
+            else{
+                double rightTipOffsetY = Math.sin(Math.toRadians(Constants.DEGREES_45_ARROW_TIP_ANGLE - (Constants.DEGREES_90 - quarterDegree))) * arrowHypotenuse;
+                rightTipY += rightTipOffsetY;
+                double rightTipOffsetX = (newEndX - rightTipX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetY, 2)));
+                rightTipX += rightTipOffsetX;
+            }
+            //endregion
+        }
+        else if (degree > Constants.DEGREES_180 && degree < Constants.DEGREES_270) {
+            //region 180-270
+            double newDegrees = degree - Constants.DEGREES_180;
+            newEndX = endX - Constants.NODE_RADIUS * Math.cos(Math.toRadians(newDegrees));
+            newEndY = endY + Constants.NODE_RADIUS * Math.sin(Math.toRadians(newDegrees));
+            //arrowHypotenuse is identical for left and right sides
+            double arrowHypotenuse = Math.sqrt(Math.pow(Constants.DISTANCE_FROM_LINE_ARROW_TIP, 2) + Math.pow(Constants.SIDE_DISTANCE_FROM_LINE, 2));
+            leftTipX = newEndX - arrowHypotenuse;
+            leftTipY = newEndY;
+            rightTipX = newEndX;
+            rightTipY = newEndY + arrowHypotenuse;
+
+            double quarterDegree = degree - Constants.DEGREES_180;
+            if(quarterDegree < 45) {
+                //LEFT
+                double leftTipOffsetY = Math.sin(Math.toRadians(Constants.DEGREES_45_ARROW_TIP_ANGLE - quarterDegree)) * arrowHypotenuse;
+                leftTipY -= leftTipOffsetY;
+                double leftTipOffsetX = (newEndX - leftTipX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(leftTipOffsetY, 2)));
+                leftTipX += leftTipOffsetX;
+                //RIGHT
+                double rightTipOffsetX = Math.sin(Math.toRadians(Constants.DEGREES_90 - (quarterDegree + Constants.DEGREES_45_ARROW_TIP_ANGLE))) * arrowHypotenuse;
+                rightTipX -= rightTipOffsetX;
+                double rightTipOffsetY = (rightTipY - newEndY) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetX, 2)));;
+                rightTipY -= rightTipOffsetY;
+            }
+            //quarterDegree >= 45
+            else{
+                //LEFT
+                double leftTipOffsetY = Math.sin(Math.toRadians(quarterDegree - Constants.DEGREES_45_ARROW_TIP_ANGLE)) * arrowHypotenuse;
+                leftTipY += leftTipOffsetY;
+                double leftTipOffsetX = (newEndX - leftTipX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(leftTipOffsetY, 2)));
+                leftTipX += leftTipOffsetX;
+                //RIGHT
+                double rightTipOffsetX = Math.sin(Math.toRadians(Constants.DEGREES_45_ARROW_TIP_ANGLE - (Constants.DEGREES_90 - quarterDegree))) * arrowHypotenuse;
+                rightTipX += rightTipOffsetX;
+                double rightTipOffsetY = (rightTipY - newEndY) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetX, 2)));;
+                rightTipY -= rightTipOffsetY;
+            }
+            //endregion
+        }
+        else if (degree > Constants.DEGREES_270 && degree < Constants.DEGREES_360) { //
+            //region 270-360
+            double newDegrees = Constants.DEGREES_360 - degree;
+            newEndX = endX + Constants.NODE_RADIUS * Math.cos(Math.toRadians(newDegrees));
+            newEndY = endY + Constants.NODE_RADIUS * Math.sin(Math.toRadians(newDegrees));
+            //arrowHypotenuse is identical for left and right sides
+            double arrowHypotenuse = Math.sqrt(Math.pow(Constants.DISTANCE_FROM_LINE_ARROW_TIP, 2) + Math.pow(Constants.SIDE_DISTANCE_FROM_LINE, 2));
+            leftTipX = newEndX;
+            leftTipY = newEndY + arrowHypotenuse;
+            rightTipX = newEndX + arrowHypotenuse;
+            rightTipY = newEndY;
+
+            double quarterDegree = degree - Constants.DEGREES_270;
+            if(quarterDegree < 45) {
+                //LEFT
+                double leftTipOffsetX = Math.sin(Math.toRadians(Constants.DEGREES_45_ARROW_TIP_ANGLE - quarterDegree)) * arrowHypotenuse;
+                leftTipX -= leftTipOffsetX;
+                double leftTipOffsetY = (leftTipY - newEndY) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(leftTipOffsetX, 2)));
+                leftTipY -= leftTipOffsetY;
+                //RIGHT
+                double rightTipOffsetY = Math.sin(Math.toRadians(Constants.DEGREES_90 - (quarterDegree + Constants.DEGREES_45_ARROW_TIP_ANGLE))) * arrowHypotenuse;
+                rightTipY += rightTipOffsetY;
+                double rightTipOffsetX = (rightTipX - newEndX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetY, 2)));
+                rightTipX -= rightTipOffsetX;
+            }
+            //quarterDegree >= 45
+            else{
+                //LEFT
+                double leftTipOffsetX = Math.sin(Math.toRadians(quarterDegree - Constants.DEGREES_45_ARROW_TIP_ANGLE)) * arrowHypotenuse;
+                leftTipX += leftTipOffsetX;
+                double leftTipOffsetY = (leftTipY - newEndY) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(leftTipOffsetX, 2)));
+                leftTipY -= leftTipOffsetY;
+                //RIGHT
+                double rightTipOffsetY = Math.sin(Math.toRadians(Constants.DEGREES_45_ARROW_TIP_ANGLE - (Constants.DEGREES_90 - quarterDegree))) * arrowHypotenuse;
+                rightTipY -= rightTipOffsetY;
+                double rightTipOffsetX = (rightTipX - newEndX) - (Math.sqrt(Math.pow(arrowHypotenuse, 2) - Math.pow(rightTipOffsetY, 2)));
+                rightTipX -= rightTipOffsetX;
+            }
+            //endregion
+        }
+        else {
+            UsefulFunction.throwException("Strange situation. Program couldn't figure out degree for a curve line.");
+        }
+        //endregion
+
+        Polyline lineTipPoints = new Polyline(leftTipX, leftTipY, newEndX, newEndY, rightTipX, rightTipY);
+        lineTipPoints.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
+        lineTipPoints.setFill(Constants.CANVAS_BACKGROUND_COLOR);
+        lineTipPoints.setStroke(Constants.EDGE_ARROW_TIP_COLOR);
+        return lineTipPoints;
+    }
+
+    private static boolean isDirectUp(double startY, double endY)
+    {
+        if (endY < startY) {
+            return true;
+        }
+        else {
+            return false;
+        }
+    }
+
+    private static boolean isDirectLeft(double startX, double endX)
+    {
+        if (endX < startX) {
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 
     private static double[] getListPointsForPolyline(double startX, double startY, double endX, double endY)
@@ -163,44 +397,48 @@ public class GraphDrawer
         polylinePoints[0] = startX;
         polylinePoints[1] = startY;
 
+
         double pointsWeight = 0, pointsHeight = 0, lineCenterX = 0, lineCenterY = 0;
 
-        if(startX <= endX) {
+        //region Height and weight getting and Line center
+        if (startX <= endX) {
             pointsWeight = endX - startX;
             lineCenterX = pointsWeight / 2 + startX;
         }
-        else{
+        else {
             pointsWeight = startX - endX;
             lineCenterX = pointsWeight / 2 + endX;
         }
 
-        if(startY <= endY) {
+        if (startY <= endY) {
             pointsHeight = endY - startY;
             lineCenterY = pointsHeight / 2 + startY;
         }
-        else{
+        else {
             pointsHeight = startY - endY;
             lineCenterY = pointsHeight / 2 + endY;
         }
+        //endregion
 
-        double hypotenuseLength = Math.sqrt(pointsWeight*pointsWeight + pointsHeight*pointsHeight);
-        double degrees = Math.toDegrees(pointsHeight / hypotenuseLength);
+        //double hypotenuseLength = Math.sqrt(pointsWeight*pointsWeight + pointsHeight*pointsHeight);
+//        double degrees = Math.toDegrees(pointsHeight / hypotenuseLength);
+        double degrees = getAngleDirectionFromCenterInDegrees(startX, startY, endX, endY);
 
-        if(degrees > Constants.DEGREES_0 && degrees < Constants.DEGREES_90 || degrees > Constants.DEGREES_180 && degrees < Constants.DEGREES_270) { //[+X, +Y] OR [-X, -Y]
+        if (degrees > Constants.DEGREES_0 && degrees < Constants.DEGREES_90 || degrees > Constants.DEGREES_180 && degrees < Constants.DEGREES_270) { //[+X, +Y] OR [-X, -Y]
             lineCenterX += Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
             lineCenterY += Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
         }
-        else if (degrees > Constants.DEGREES_90 && degrees < Constants.DEGREES_180 || degrees > Constants.DEGREES_270){ //[-X, +Y] OR [+X, -Y]
+        else if (degrees > Constants.DEGREES_90 && degrees < Constants.DEGREES_180 || degrees > Constants.DEGREES_270) { //[-X, +Y] OR [+X, -Y]
             lineCenterX -= Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
             lineCenterY += Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
         }
-        else if(degrees == Constants.DEGREES_0 || degrees == Constants.DEGREES_180 ) { //[-Y] OR [+Y]
+        else if (degrees == Constants.DEGREES_0 || degrees == Constants.DEGREES_180) { //[-Y] OR [+Y]
             lineCenterY -= Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
         }
-        else if(degrees == Constants.DEGREES_90 || degrees == Constants.DEGREES_270 ) {//[+X] OR [-X]
+        else if (degrees == Constants.DEGREES_90 || degrees == Constants.DEGREES_270) {//[+X] OR [-X]
             lineCenterY += Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
         }
-        else{
+        else {
             UsefulFunction.throwException("Strange situation. Program couldn't figure out degrees for a curve line.");
         }
 
@@ -215,9 +453,103 @@ public class GraphDrawer
         return polylinePoints;
     }
 
+    /**
+     * 10 20 30 40 50 60
+     * 10         end point
+     * 20         o
+     * 30        /
+     * 40      / angle
+     * 50     o-------
+     * 60 start point
+     *
+     * @param startX
+     * @param startY
+     * @param endX
+     * @param endY
+     * @return angle in degrees
+     */
+    public static double getAngleDirectionFromCenterInDegrees(double startX, double startY, double endX, double endY)
+    {
+        // calculate the angle theta from the deltaY and deltaX values
+        // (atan2 returns radians values from [-PI,PI])
+        // 0 currently points EAST.
+        // NOTE: By preserving Y and X param order to atan2,  we are expecting
+        // a CLOCKWISE angle direction.
+        double theta = Math.atan2(endX - startX, endY - startY);
+
+        // rotate the theta angle clockwise by 90 degrees
+        // (this makes 0 point NORTH)
+        // NOTE: adding to an angle rotates it clockwise.
+        // subtracting would rotate it counter-clockwise
+        theta -= Math.PI / 2;
+
+        // convert from radians to degrees
+        // this will give you an angle from [0->270],[-180,0]
+        double angle = Math.toDegrees(theta);
+
+        // convert to positive range [0-360)
+        // since we want to prevent negative angles, adjust them now.
+        // we can assume that atan2 will not return a negative value
+        // greater than one partial rotation
+        if (angle < 0) {
+            angle += 360;
+        }
+
+        return angle;
+    }
+
+    /**
+     * 10 20 30 40 50 60
+     * 10          o start point
+     * 20         /
+     * 30       / angle
+     * 40      o-------
+     * 50    end
+     * 60
+     *
+     * @param startX
+     * @param startY
+     * @param endX
+     * @param endY
+     * @return angle in degrees
+     */
+    public static double getAngleDirectionToCenterInDegrees(double startX, double startY, double endX, double endY)
+    {
+        // calculate the angle theta from the deltaY and deltaX values
+        // (atan2 returns radians values from [-PI,PI])
+        // 0 currently points EAST.
+        // NOTE: By preserving Y and X param order to atan2,  we are expecting
+        // a CLOCKWISE angle direction.
+        double theta = Math.atan2(endX - startX, endY - startY);
+
+        // rotate the theta angle clockwise by 90 degrees
+        // (this makes 0 point NORTH)
+        // NOTE: adding to an angle rotates it clockwise.
+        // subtracting would rotate it counter-clockwise
+        theta += Math.PI / 2;
+
+        // convert from radians to degrees
+        // this will give you an angle from [0->270],[-180,0]
+        double angle = Math.toDegrees(theta);
+
+        // convert to positive range [0-360)
+        // since we want to prevent negative angles, adjust them now.
+        // we can assume that atan2 will not return a negative value
+        // greater than one partial rotation
+        if (angle < 0) {
+            angle += 360;
+        }
+
+        return angle;
+    }
+
     private static boolean nextNodeHasEdgeToStartNode(DekstraNode startNode, DekstraNode nextNode)
     {
-        if(nextNode.getNextNodes().contains(startNode.getNumber()) && !nextNode.madeCurveLine()){
+        List<Integer> nextNodesNumbers = nextNode.getNextNodes();
+
+        if (nextNodesNumbers == null || nextNodesNumbers.isEmpty()) return false;
+
+        if (nextNodesNumbers.contains(startNode.getNumber()) && !nextNode.madeCurveLine()) {
             startNode.setMadeCurveLine(true);
             return true;
         }
@@ -295,13 +627,44 @@ public class GraphDrawer
         return randomIndex;
     }
 
-    private static boolean theRandomCellHasBeenOccupiedOnCanvas(int randomRowIndex, int randomColumnIndex)
+    public static void main(String[] args)
     {
-        if (cellsOnCanvas[randomRowIndex][randomColumnIndex]) {
-            return true;
-        }
+        double degrees = getAngleDirectionFromCenterInDegrees(30, 30, 50, 30);
+        double degrees2 = getAngleDirectionFromCenterInDegrees(30, 30, 50, 10);
+        double degrees3 = getAngleDirectionFromCenterInDegrees(30, 30, 30, 10);
+        double degrees4 = getAngleDirectionFromCenterInDegrees(30, 30, 10, 10);
+        double degrees5 = getAngleDirectionFromCenterInDegrees(30, 30, 10, 30);
+        double degrees6 = getAngleDirectionFromCenterInDegrees(30, 30, 10, 50);
+        double degrees7 = getAngleDirectionFromCenterInDegrees(30, 30, 30, 50);
+        double degrees8 = getAngleDirectionFromCenterInDegrees(30, 30, 50, 50);
 
-        return false;
+        System.out.println(degrees);
+        System.out.println(degrees2);
+        System.out.println(degrees3);
+        System.out.println(degrees4);
+        System.out.println(degrees5);
+        System.out.println(degrees6);
+        System.out.println(degrees7);
+        System.out.println(degrees8);
+
+        System.out.println();
+
+        double degrees9 = getAngleDirectionToCenterInDegrees(50, 30, 30, 30);
+        double degrees10 = getAngleDirectionToCenterInDegrees(50, 10, 30, 30);
+        double degrees11 = getAngleDirectionToCenterInDegrees(30, 10, 30, 30);
+        double degrees12 = getAngleDirectionToCenterInDegrees(10, 10, 30, 30);
+        double degrees13 = getAngleDirectionToCenterInDegrees(10, 30, 30, 30);
+        double degrees14 = getAngleDirectionToCenterInDegrees(10, 50, 30, 30);
+        double degrees15 = getAngleDirectionToCenterInDegrees(30, 50, 30, 30);
+        double degrees16 = getAngleDirectionToCenterInDegrees(50, 50, 30, 30);
+
+        System.out.println(degrees9);
+        System.out.println(degrees10);
+        System.out.println(degrees11);
+        System.out.println(degrees12);
+        System.out.println(degrees13);
+        System.out.println(degrees14);
+        System.out.println(degrees15);
+        System.out.println(degrees16);
     }
-
 }

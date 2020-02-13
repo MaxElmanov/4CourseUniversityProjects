@@ -14,7 +14,6 @@ import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Alert.AlertType;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
@@ -44,6 +43,8 @@ public class Launcher extends Application
     private Pane canvas;
 
     private static List<MyCircle> circles = new ArrayList<>();
+    private static List<Label> rootAndTargetNode_labels_forRunStage = new ArrayList<>();
+    private static ObservableList<MySpinner<Integer>> rootAndTargetNode_spinners_forRunStage = FXCollections.observableArrayList();;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException
     {
@@ -62,7 +63,7 @@ public class Launcher extends Application
 //        graph.add(new DekstraNode(new Node(13,  null,   null)));
 //        graph.add(new DekstraNode(new Node(14,  Arrays.asList(13),   Arrays.asList(3))));
 //        graph.add(new DekstraNode(new Node(15,  Arrays.asList(13),   Arrays.asList(3))));
-        Application.launch();
+       Application.launch();
     }
 
     @Override
@@ -111,8 +112,6 @@ public class Launcher extends Application
         MenuItem uploadFromFile_mi = new MenuItem("Upload a graph from file");
         uploadFromFile_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/uploadButton_mi.png"))));
         uploadFromFile_mi.setOnAction(((e) -> {
-            refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID", "Canvas_ID"));
-
             //region FileChooser
             final FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("TXT", "*.txt"));
@@ -121,6 +120,12 @@ public class Launcher extends Application
             File file = fileChooser.showOpenDialog(primaryStage);
             if (file != null) {
                 try {
+                    //region Before upload execution Cleaning
+                    clearGraphNodes();
+                    clearCanvasObjects();
+                    clearCircles();
+                    //endregion
+
                     //filling up graph from file
                     FileExecutorForMatrixAdjacency fileExecutor = new FileExecutorForMatrixAdjacency(file);
                     AlertCommands alertCommand = fileExecutor.fillUp(graph);
@@ -128,18 +133,35 @@ public class Launcher extends Application
                     Map<AlertCommands, String> alertMap = new HashMap<>();
                     alertMap.put(alertCommand.RIGHTS_RESULT, "File was successfully read.");
                     alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. Check for it.");
-                    alertMap.put(alertCommand.ERROR_RESULT, "You uploaded an empty file. Check out for it.");
+                    alertMap.put(alertCommand.ERROR_RESULT, "You uploaded an empty or invalid file. Check out for it.");
                     //endregion
                     boolean continueExecution = checkResultCommandForWarningAndError(alertCommand, alertMap, grid);
                     if(!continueExecution) {
+                        clearWorkingAreaExceptIDs("Menu_ID");
                         return;
                     }
 
-                    ObservableList<MySpinner<Integer>> spinners = getAndAddToGridRootAndTargetNodes_lbl_spinners(grid, graph.Nodes().size());
+                    getAndAddToGridRootAndTargetNodes_labels_spinners(grid, graph.Nodes().size());
+                    Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+                    canvas = addCanvas();
 
-                    grid.add(addRunButton(grid, spinners), 0, 3, 1, 1);
+                    //region Visibility setup for run stage objects
+                    runButton.setVisible(true);
+                    for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
+                        spinner.setVisible(true);
+                    }
+                    for (Label label : rootAndTargetNode_labels_forRunStage){
+                        label.setVisible(true);
+                    }
+                    //endregion
 
-                    grid.add(addCanvas(), 2, 1, 8, 9);
+                    grid.add(runButton, 0, 3, 1, 1);
+
+                    grid.add(canvas, 2, 1, 8, 9);
+
+                    //region After upload execution Cleaning
+                    clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID", "LeftSideObject_for_before_run_stage_ID");
+                    //endregion
                 }
                 catch (IOException e1) {
                     e1.printStackTrace();
@@ -147,56 +169,57 @@ public class Launcher extends Application
             }
         }));
         //endregion
-        //region setUp graph parameters menuItem
+
+        //region SetUp graph parameters menuItem
         MenuItem setUpParameters_mi = new MenuItem("Set up a random graph");
         setUpParameters_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/setUpParams_mi.png"))));
         setUpParameters_mi.setOnAction((e) -> {
             //region Cleaning working area except menuBar
-            refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID", "Canvas_ID"));
+            clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID");
             clearGraphNodes();
+            clearCanvasObjects();
+            clearCircles();
             //endregion
             //region Spinners & Labels creation
             Label nodesAmount_lbl = createNewLabel("Nodes amount", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.CENTER, false);
-            nodesAmount_lbl.setId("LeftSideObject_ID");
+            nodesAmount_lbl.setId("LeftSideObject_for_generation_stage_ID");
             MySpinner<Integer> nodesAmount_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER, Constants.MAX_GENERATED_NUMBER, Constants.defaultInitialValueForSpinner, HPos.CENTER);
-            nodesAmount_spinner.setId("LeftSideObject_ID");
+            nodesAmount_spinner.setId("LeftSideObject_for_generation_stage_ID");
             Label edgesAmount_lbl = createNewLabel("Edges amount", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.CENTER, false);
-            edgesAmount_lbl.setId("LeftSideObject_ID");
+            edgesAmount_lbl.setId("LeftSideObject_for_generation_stage_ID");
             MySpinner<Integer> edgesAmount_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER, Constants.MAX_GENERATED_NUMBER, Constants.defaultInitialValueForSpinner, HPos.CENTER);
-            edgesAmount_spinner.setId("LeftSideObject_ID");
+            edgesAmount_spinner.setId("LeftSideObject_for_generation_stage_ID");
 
             Label weightsValuesRange_lbl = createNewLabel("Weights values range [1-50]", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.CENTER, false);
-            weightsValuesRange_lbl.setId("LeftSideObject_ID");
+            weightsValuesRange_lbl.setId("LeftSideObject_for_generation_stage_ID");
             Label weightsValuesRange_FROM_lbl = createNewLabel("from", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
-            weightsValuesRange_FROM_lbl.setId("LeftSideObject_ID");
+            weightsValuesRange_FROM_lbl.setId("LeftSideObject_for_generation_stage_ID");
             MySpinner<Integer> weightsValuesRange_FROM_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER,
                                                                                   Constants.MAX_GENERATED_NUMBER,
                                                                                   Constants.defaultInitialValueForSpinner,
                                                                                   HPos.CENTER);
-            weightsValuesRange_FROM_spinner.setId("LeftSideObject_ID");
+            weightsValuesRange_FROM_spinner.setId("LeftSideObject_for_generation_stage_ID");
             Label weightsValuesRange_TO_lbl = createNewLabel("to", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
             MySpinner<Integer> weightsValuesRange_TO_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER,
                                                                                 Constants.MAX_GENERATED_NUMBER,
                                                                                 Constants.defaultInitialValueForSpinner,
                                                                                 HPos.CENTER);
-            weightsValuesRange_TO_spinner.setId("LeftSideObject_ID");
+            weightsValuesRange_TO_spinner.setId("LeftSideObject_for_generation_stage_ID");
             //endregion
             //region generateRandomGraph_btn settings
             Button generateRandomGraph_btn = new Button("Generate");
-            generateRandomGraph_btn.setId("LeftSideObject_ID");
+            generateRandomGraph_btn.setId("LeftSideObject_for_generation_stage_ID");
             generateRandomGraph_btn.setMaxSize(80, 30);
             generateRandomGraph_btn.setOnAction((e_2) -> {
-                refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID", "Canvas_ID"));
-
-                ObservableList<MySpinner<Integer>> spinners = getAndAddToGridRootAndTargetNodes_lbl_spinners(grid, nodesAmount_spinner.getCurrentValue());
-
-                grid.add(addRunButton(grid, spinners), 0, 3, 2, 1);
+                getAndAddToGridRootAndTargetNodes_labels_spinners(grid, nodesAmount_spinner.getCurrentValue());
+                Button runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
 
                 RandomGraphGenerator randomGraphGenerator = new RandomGraphGenerator(graph,
                                                                                      nodesAmount_spinner.getCurrentValue(),
                                                                                      edgesAmount_spinner.getCurrentValue(),
                                                                                      weightsValuesRange_FROM_spinner.getCurrentValue(),
                                                                                      weightsValuesRange_TO_spinner.getCurrentValue());
+
                 AlertCommands alertCommand = randomGraphGenerator.generate();
                 //region alertMap for random graph generation
                 Map<AlertCommands, String> alertMap = new HashMap<>();
@@ -209,7 +232,21 @@ public class Launcher extends Application
                     return;
                 }
 
+                //region Visibility setup for run stage objects
+                runButton.setVisible(true);
+                for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
+                    spinner.setVisible(true);
+                }
+                for (Label label : rootAndTargetNode_labels_forRunStage){
+                    label.setVisible(true);
+                }
+                //endregion
+
+                grid.add(runButton, 0, 3, 2, 1);
+
                 grid.add(addCanvas(), 2, 1, 8, 9);
+
+                clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID", "LeftSideObject_for_before_run_stage_ID");
             });
             GridPane.setHalignment(generateRandomGraph_btn, HPos.RIGHT);
             //endregion
@@ -229,6 +266,7 @@ public class Launcher extends Application
             //endregion
         });
         //endregion
+
         //region exit menuItem
         MenuItem exit_mi = new MenuItem("Exit");
         exit_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/exit_mi.png"))));
@@ -236,18 +274,21 @@ public class Launcher extends Application
             System.exit(0);
         });
         //endregion
-        //region Refresh working area menuItem
-        MenuItem refresh_working_area_mi = new MenuItem("Refresh working area");
-        refresh_working_area_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/refresh_working_area_mi.png"))));
-        refresh_working_area_mi.setOnAction((e) -> {
-            refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID"));
+
+        //region Clear working area menuItem
+        MenuItem clear_working_area_mi = new MenuItem("Clear working area");
+        clear_working_area_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_working_area_mi.png"))));
+        clear_working_area_mi.setOnAction((e) -> {
+            clearWorkingAreaExceptIDs("Menu_ID");
         });
         //endregion
-        //region Refresh canvas objects menuItem
-        MenuItem refresh_canvas_objects_mi = new MenuItem("Refresh canvas objects");
-        refresh_canvas_objects_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/refresh_canvas_objects_mi.png"))));
-        refresh_canvas_objects_mi.setOnAction((e) -> {
-            eraseCanvasObjects();
+
+        //region Clear canvas objects menuItem
+        MenuItem clear_canvas_objects_mi = new MenuItem("Clear canvas objects");
+        clear_canvas_objects_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_canvas_objects_mi.png"))));
+        clear_canvas_objects_mi.setOnAction((e) -> {
+            clearCanvasObjects();
+            clearCircles();
         });
         //endregion
 
@@ -255,8 +296,8 @@ public class Launcher extends Application
         main_menu.getItems().add(setUpParameters_mi);
         main_menu.getItems().add(exit_mi);
 
-        prepare_menu.getItems().add(refresh_working_area_mi);
-        prepare_menu.getItems().add(refresh_canvas_objects_mi);
+        prepare_menu.getItems().add(clear_working_area_mi);
+        prepare_menu.getItems().add(clear_canvas_objects_mi);
 
         menuBar.getMenus().addAll(main_menu, prepare_menu);
         grid.add(menuBar, 0, 0, 10, 1);
@@ -271,21 +312,24 @@ public class Launcher extends Application
 
         switch (resultCommand) {
             case RIGHTS_RESULT: {
-                createAlert(AlertType.INFORMATION, "Entered valid fields values!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
+                createAlert(Alert.AlertType.INFORMATION, "Entered valid fields values!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
                 break;
             }
             case WARNING_RESULT: {
-                refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID", "Canvas_ID"));
-                createAlert(AlertType.WARNING, "Entered invalid values!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
+                createAlert(Alert.AlertType.WARNING, "Entered invalid values!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
+                continueExecution = false;
                 break;
             }
             case ERROR_RESULT: {
-                refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID", "Canvas_ID", "LeftSideObject_ID"));
-                createAlert(AlertType.ERROR, "Total error!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
+                createAlert(Alert.AlertType.ERROR, "Total error!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
                 continueExecution = false;
                 break;
             }
             default:
+                clearWorkingAreaExceptIDs("Menu_ID");
+                clearCircles();
+                clearCanvasObjects();
+                clearGraphNodes();
                 UsefulFunction.throwException("There is no such a result. Fix code.");
                 continueExecution = false;
         }
@@ -293,7 +337,7 @@ public class Launcher extends Application
         return continueExecution;
     }
 
-    private void createAlert(AlertType alertType, String title, String context)
+    private void createAlert(Alert.AlertType alertType, String title, String context)
     {
         Alert alert = new Alert(alertType, context);
         alert.setTitle(title);
@@ -301,7 +345,7 @@ public class Launcher extends Application
         alert.showAndWait();
     }
 
-    private Node addCanvas()
+    private Pane addCanvas()
     {
         canvas = new Pane();
         canvas.setId("Canvas_ID");
@@ -312,7 +356,7 @@ public class Launcher extends Application
         canvas.setOnMouseClicked(e->{
             //check for max nodes amount which can be set up on the canvas
             if(circles.size() >= graph.Nodes().size()) {
-                createAlert(AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
+                createAlert(Alert.AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
                 return;
             }
 
@@ -324,44 +368,58 @@ public class Launcher extends Application
             //check for last added node on canvas
             if(circles.size() == graph.Nodes().size()) {
                 GraphDrawer.drawGraphEdges(graph, canvas);
+
+                //set spinners for root and target nodes DISABLE as FALSE
+                for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
+                    spinner.setDisable(false);
+                }
             }
         });
 
         return canvas;
     }
 
-    private Node addRunButton(GridPane grid, ObservableList<MySpinner<Integer>> spinners)
+    private Button addRunButton(GridPane grid, ObservableList<MySpinner<Integer>> spinners)
     {
         Button runButton = new Button("Run");
+        runButton.setVisible(false);
+        runButton.setId("LeftSideObject_for_before_run_stage_ID");
         GridPane.setHalignment(runButton, HPos.RIGHT);
         runButton.setCursor(Cursor.HAND);
         runButton.setOnAction((e_2) -> {
-            gainCrucialAlthmAndDraw(grid, spinners.get(0), spinners.get(1));
+            gainCrucialAlgorithmAndDraw(grid, spinners.get(0), spinners.get(1));
         });
 
         return runButton;
     }
 
-    private void gainCrucialAlthmAndDraw(GridPane grid, MySpinner<Integer> spinnerForRootNode, MySpinner<Integer> spinnerForTargetNode)
+    private void gainCrucialAlgorithmAndDraw(GridPane grid, MySpinner<Integer> spinnerForRootNode, MySpinner<Integer> spinnerForTargetNode)
     {
         try {
             //region Initiate Dekstra algorithm & DO algorithm
             DekstraAlgorithm algorithm = new DekstraAlgorithm(graph);
             AlertCommands alertCommand = algorithm.DO(spinnerForRootNode.getCurrentValue(), spinnerForTargetNode.getCurrentValue());
             //endregion
+
             //region AlertMap for algorithm execution result
             Map<AlertCommands, String> alertMap = new HashMap<>();
             alertMap.put(alertCommand.RIGHTS_RESULT, "Algorithm was successfully performed.");
-            alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. Check for it.");
-            alertMap.put(alertCommand.ERROR_RESULT, "There is no such a path.");
+            alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. There is no such a path. Check for it.");
+            alertMap.put(alertCommand.ERROR_RESULT, "Error. There is no such a path.");
             boolean continueExecution = checkResultCommandForWarningAndError(alertCommand, alertMap, grid);
             if(!continueExecution) {
+                setUpGraphNodesAsUnusedInForwardAlthm();
                 return;
             }
             //endregion
+
+            //store temporary canvas before it will be removed
+            Pane tempCanvas = canvas;
+
             //region Cleaning working area except menuBar
-            refreshWorkingAreaExceptMenuBarExcept(Arrays.asList("Menu_ID", "Canvas_ID"));
+            clearWorkingAreaExceptIDs("Menu_ID");
             //endregion
+
             //region Total path(s) amount label
             Label totalAmountPaths_lbl = createNewLabel("Total amount paths: " + algorithm.getAmountAllBackPaths(),
                                                         Constants.defaultFontFamily,
@@ -369,9 +427,11 @@ public class Launcher extends Application
                                                         Constants.bigFontSize,
                                                         5,
                                                         HPos.LEFT,
-                                                        true);
+                                                        false);
+            totalAmountPaths_lbl.setId("LeftSideObject_for_after_run_stage_ID");
             grid.add(totalAmountPaths_lbl, 0, 1, 1, 1);
             //endregion
+
             //region Best path(s) weight label
             Label bestPathsWeight_lbl = createNewLabel("Best path(s) weight: " + algorithm.getBestPathWeight(),
                                                        Constants.defaultFontFamily,
@@ -379,20 +439,24 @@ public class Launcher extends Application
                                                        Constants.bigFontSize,
                                                        5,
                                                        HPos.LEFT,
-                                                       true);
+                                                       false);
+            bestPathsWeight_lbl.setId("LeftSideObject_for_after_run_stage_ID");
             grid.add(bestPathsWeight_lbl, 0, 2, 1, 1);
             //endregion
+
             //region Algorithm spent time
             Label algorithmSpentTime_lbl = createNewLabel("Algorithm spent time: " + algorithm.getAlgorithmSpentTime() + " mcs",
-                                                       Constants.defaultFontFamily,
-                                                       FontWeight.NORMAL,
-                                                       Constants.bigFontSize,
-                                                       5,
-                                                       HPos.LEFT,
-                                                          true);
+                                                          Constants.defaultFontFamily,
+                                                          FontWeight.NORMAL,
+                                                          Constants.bigFontSize,
+                                                          5,
+                                                          HPos.LEFT,
+                                                          false);
+            bestPathsWeight_lbl.setId("LeftSideObject_for_after_run_stage_ID");
             grid.add(algorithmSpentTime_lbl, 0, 3, 1, 1);
             //endregion
-            //region OutputInfo textArea
+
+            //region outputInfo_listView
 //            TextArea outputInfo_textArea = new TextArea(UsefulFunction.getMapContent(algorithm.getMap()));
 //            outputInfo_textArea.setMaxWidth(Constants.SCREEN_WEIGHT * Constants.LEFTSIDE_WEIGHT_IN_PERCENT / 2);
 //            outputInfo_textArea.setMaxWidth(Constants.SCREEN_HEIGHT * Constants.LEFTSIDE_HEIGHT_IN_PERCENT);
@@ -401,8 +465,14 @@ public class Launcher extends Application
 //
             ObservableList<String> mapOutputInfo = FXCollections.observableArrayList(UsefulFunction.getMapContent(algorithm.getMap()));
             ListView<String> outputInfo_listView = new ListView<>(mapOutputInfo);
+            outputInfo_listView.setId("LeftSideObject_for_after_run_stage_ID");
             grid.add(outputInfo_listView, 0, 4, 1, 6);
             //endregion
+
+            grid.add(tempCanvas, 2, 1, 8, 8);
+
+            clearGraphNodes();
+            clearRootAndTarget_labels_spinners();
         }
         catch (ExecutionException e1) {
             e1.printStackTrace();
@@ -412,23 +482,44 @@ public class Launcher extends Application
         }
     }
 
-    private ObservableList<MySpinner<Integer>> getAndAddToGridRootAndTargetNodes_lbl_spinners(GridPane grid, Integer nodesAmount)
+    private void getAndAddToGridRootAndTargetNodes_labels_spinners(GridPane grid, Integer nodesAmount)
     {
-        ObservableList<MySpinner<Integer>> spinners = FXCollections.observableArrayList();
-
+        //region Root node label
         Label rootNode_lbl = createNewLabel("Root node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
+        rootNode_lbl.setId("LeftSideObject_for_before_run_stage_ID");
+        rootNode_lbl.setVisible(false);
         grid.add(rootNode_lbl, 0, 1, 1, 1);
+        //endregion
+
+        //region Root node spinner
         MySpinner<Integer> spinnerForRootNode = createNewSpinner(Constants.MIN_GENERATED_NUMBER, nodesAmount, Constants.defaultInitialValueForSpinner, HPos.RIGHT);
+        spinnerForRootNode.setId("LeftSideObject_for_before_run_stage_ID");
+        spinnerForRootNode.setVisible(false);
+        spinnerForRootNode.setDisable(true);
         grid.add(spinnerForRootNode, 1, 1, 1, 1);
+        //endregion
 
+        //region Target node label
         Label targetNode_lbl = createNewLabel("Target node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
+        targetNode_lbl.setId("LeftSideObject_for_before_run_stage_ID");
+        targetNode_lbl.setVisible(false);
         grid.add(targetNode_lbl, 0, 2, 1, 1);
+        //endregion
+
+        //region Target node spinner
         MySpinner<Integer> spinnerForTargetNode = createNewSpinner(Constants.MIN_GENERATED_NUMBER, nodesAmount, Constants.defaultInitialValueForSpinner, HPos.RIGHT);
+        spinnerForTargetNode.setId("LeftSideObject_for_before_run_stage_ID");
+        spinnerForTargetNode.setVisible(false);
+        spinnerForTargetNode.setDisable(true);
         grid.add(spinnerForTargetNode, 1, 2, 1, 1);
+        //endregion
 
-        spinners.addAll(spinnerForRootNode, spinnerForTargetNode);
+        //MySpinners list
+        rootAndTargetNode_spinners_forRunStage.addAll(spinnerForRootNode, spinnerForTargetNode);
 
-        return spinners;
+        //Labels list
+        rootAndTargetNode_labels_forRunStage.add(rootNode_lbl);
+        rootAndTargetNode_labels_forRunStage.add(targetNode_lbl);
     }
 
     private Label createNewLabel(String string, String fontFamily, FontWeight fontWeight, Double fontSize, Integer padding, HPos hPos, boolean setBorder)
@@ -459,10 +550,15 @@ public class Launcher extends Application
         return spinner;
     }
 
-    private void refreshWorkingAreaExceptMenuBarExcept(List<String> exceptIds)
+    private void clearWorkingAreaExceptIDs(String... exceptIdsInArray)
     {
-        //region Clear UI objects
         ObservableList<Node> gridNodesList = grid.getChildren();
+
+        List<String> exceptIds = Arrays.asList(exceptIdsInArray);
+
+        if(gridNodesList == null || gridNodesList.isEmpty()) return;
+
+        //region Clear UI objects
         ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
         for (Node node : gridNodesList) {
             String node_ID = node.getId();
@@ -483,25 +579,102 @@ public class Launcher extends Application
             gridNodesList.add(savedNode);
         }
         //endregion
+    }
 
-        //region List with objects
-        circles.clear();
+    private void clearWorkingAreaObjectsWithID(String... IDsToRemoveInArray)
+    {
+        ObservableList<Node> gridNodesList = grid.getChildren();
+        //convert array to list
+        List<String> IDsToRemove = Arrays.asList(IDsToRemoveInArray);
+
+        if(gridNodesList == null || gridNodesList.isEmpty() || IDsToRemove == null || IDsToRemove.isEmpty()) return;
+
+        //region Clear UI objects
+        ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
+        for (Node node : gridNodesList) {
+            String node_ID = node.getId();
+
+            for (String idToRemove : IDsToRemove){
+                if (!node_ID.equalsIgnoreCase(idToRemove)) {
+                    newGridNodesList.add(node);
+                    break;
+                }
+            }
+        }
+
+        gridNodesList.clear();
+
+        for (Node savedNode : newGridNodesList) {
+            gridNodesList.add(savedNode);
+        }
         //endregion
     }
 
-    private void eraseCanvasObjects()
+    private void clearCanvasObjects()
     {
-        circles.clear();
+        if(canvas != null) {
+            if(canvas.getChildren() != null) {
+                if(!canvas.getChildren().isEmpty()) {
+                    canvas.getChildren().clear();
+                }
+            }
+        }
 
-        canvas.getChildren().clear();
-
-        for (DekstraNode node : graph.Nodes()){
-            node.setUpOnCanvas(false);
+        if(graph != null){
+            if(graph.Nodes() != null) {
+                for (DekstraNode node : graph.Nodes()){
+                    node.setUpOnCanvas(false);
+                }
+            }
         }
     }
 
     private void clearGraphNodes()
     {
-        graph.Nodes().clear();
+        if(graph != null) {
+            if(graph.Nodes() != null) {
+                if(!graph.Nodes().isEmpty()) {
+                    graph.Nodes().clear();
+                }
+            }
+        }
+    }
+
+    private void setUpGraphNodesAsUnusedInForwardAlthm()
+    {
+        if(graph != null) {
+            if(graph.Nodes() != null) {
+                if(!graph.Nodes().isEmpty()) {
+                    for (DekstraNode node : graph.Nodes()){
+                        node.setWasUsedInForwardAlthm(false);
+                    }
+                }
+            }
+        }
+    }
+
+    private void clearCircles()
+    {
+        if(circles != null) {
+            if(!circles.isEmpty()) {
+                circles.clear();
+            }
+        }
+    }
+
+    private void clearRootAndTarget_labels_spinners(){
+        //labels
+        if(rootAndTargetNode_labels_forRunStage != null) {
+            if(!rootAndTargetNode_labels_forRunStage.isEmpty()) {
+                rootAndTargetNode_labels_forRunStage.clear();
+            }
+        }
+
+        //spinners
+        if(rootAndTargetNode_spinners_forRunStage != null) {
+            if(!rootAndTargetNode_spinners_forRunStage.isEmpty()) {
+                rootAndTargetNode_spinners_forRunStage.clear();
+            }
+        }
     }
 }

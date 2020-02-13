@@ -114,15 +114,23 @@ public class DekstraAlgorithm
             List<Integer> nextNodes = minWeightNode.getNextNodes();
 
             //if "minWeightNode" doesn't have next nodes
+
+            boolean goOutFromLoop = false;
             while (nextNodes == null || nextNodes.isEmpty()) {
                 minWeightNode = getMinWeightNodeExcept(minWeightNode);
+
+                if(minWeightNode == null) {
+                    goOutFromLoop = true;
+                    break;
+                }
+
                 nextNodes = minWeightNode.getNextNodes();
             }
 
-            //it works when "getMinWeightNode()" returns "minWeightNode" without "getNextNodes()"
-//            if (!areThereNodesWhichNotToBeUsedInForwardAlgthm() && nextNodes == null || nextNodes.isEmpty()) {
-//                return AlertCommands.ERROR_RESULT;
-//            }
+            //go out from the loop if "getMinWeightNodeExcept(minWeightNode)" function can't find "minWeightNode" among all nodes
+            if(goOutFromLoop) {
+                break;
+            }
 
             List<Integer> weightsToNextNodes = minWeightNode.getWeights();
             for (int i = 0; i < nextNodes.size(); i++) {
@@ -440,7 +448,7 @@ public class DekstraAlgorithm
         List<Integer> currentNodeParentsNumbers = currentNode.getParents();
 
         if (currentNodeParentsNumbers.isEmpty()) {
-            DekstraNode nextNodeWithManyParents = getNextNodeWithManyParents(currentNode, map.get(pathNumber));
+            DekstraNode nextNodeWithManyParents = getNextNodeWithManyParents(currentNode, map.get(pathNumber), null);
 
             //new pathNumber (pathNumber)
             pathNumber++;
@@ -534,26 +542,36 @@ public class DekstraAlgorithm
         return null;
     }
 
-    private DekstraNode getNextNodeWithManyParents(DekstraNode currentNode, List<Integer> listInMap)
+    private DekstraNode getNextNodeWithManyParents(DekstraNode currentNode, List<Integer> listInMap, List<Integer> alreadyUsedNodesNumbers)
     {
-        if (listInMap != null && listInMap.contains(currentNode.getNumber())) {
-            return goThroughNextNodesBy(currentNode, listInMap);
+        if(alreadyUsedNodesNumbers == null || alreadyUsedNodesNumbers.isEmpty()) {
+            alreadyUsedNodesNumbers = new ArrayList<>();
+        }
+
+        if (listInMap != null){
+            if(listInMap.contains(currentNode.getNumber())) {
+                return goThroughNextNodesBy(currentNode, listInMap, alreadyUsedNodesNumbers);
+            }
         }
 
         return null;
     }
 
-    private DekstraNode goThroughNextNodesBy(DekstraNode currentNode, List<Integer> listInMap)
+    private DekstraNode goThroughNextNodesBy(DekstraNode currentNode, List<Integer> listInMap, List<Integer> alreadyUsedNodesNumbers)
     {
         for (Integer nextNodeNumber : currentNode.getNextNodes()) {
-            if (listInMap.contains(nextNodeNumber)) {
+            if (listInMap.contains(nextNodeNumber) && !alreadyUsedNodesNumbers.contains(nextNodeNumber)) {
 
                 DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+
+                if(currentNode.equals(nextNode)) continue;
+
                 if (nextNode.getParents().size() > 1) {
                     return nextNode;
                 }
                 else {
-                    return goThroughNextNodesBy(nextNode, listInMap);
+                    alreadyUsedNodesNumbers.add(currentNode.getNumber());
+                    return goThroughNextNodesBy(nextNode, listInMap, alreadyUsedNodesNumbers);
                 }
             }
         }
@@ -674,4 +692,6 @@ public class DekstraAlgorithm
 
         System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
     }
+
+
 }
