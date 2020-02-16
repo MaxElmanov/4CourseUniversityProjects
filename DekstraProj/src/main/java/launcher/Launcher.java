@@ -159,6 +159,9 @@ public class Launcher extends Application
 
                     grid.add(canvas, 2, 1, 8, 9);
 
+                    //inform user to start landing nodes
+                    createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
+
                     //region After upload execution Cleaning
                     clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID", "LeftSideObject_for_before_run_stage_ID");
                     //endregion
@@ -245,6 +248,9 @@ public class Launcher extends Application
                 grid.add(runButton, 0, 3, 2, 1);
 
                 grid.add(addCanvas(), 2, 1, 8, 9);
+
+                //inform user to start landing nodes
+                createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
 
                 clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID", "LeftSideObject_for_before_run_stage_ID");
             });

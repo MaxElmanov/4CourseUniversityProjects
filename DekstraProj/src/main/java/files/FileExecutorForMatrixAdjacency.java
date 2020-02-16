@@ -33,46 +33,53 @@ public class FileExecutorForMatrixAdjacency
             return AlertCommands.ERROR_RESULT;
         }
 
-        for (int i = 0; i < stringList.size(); i++) {
-            String oneStr = stringList.get(i);
+        try {
+            for (int i = 0; i < stringList.size(); i++) {
+                String oneStr = stringList.get(i);
 
-            //comment in string
-            if(oneStr.contains("--")) continue;
+                //comment in string
+                if (oneStr.contains("--")) continue;
 
-            //form a node with data
-            int colonPosition = oneStr.indexOf(":");
-            Integer nodeNumber = null;
+                //form a node with data
+                int colonPosition = oneStr.indexOf(":");
+                Integer nodeNumber = null;
 
-            if(colonPosition != -1) {
-                String stringNumber = String.valueOf(oneStr.substring(0, colonPosition));
-                nodeNumber = Integer.parseInt(stringNumber);
-            }
-            else{
-                nodeNumber = i;
-            }
+                if (colonPosition != -1) {
+                    String stringNumber = String.valueOf(oneStr.substring(0, colonPosition));
+                    nodeNumber = Integer.parseInt(stringNumber);
+                }
+                else {
+                    nodeNumber = i;
+                }
 
-            List<Integer> nextNodes = new ArrayList<>();;
-            List<Integer> nextNodesWeights = new ArrayList<>();;
+                List<Integer> nextNodes = new ArrayList<>();
 
-            oneStr = oneStr.replace(" ", "");
-            oneStr = oneStr.substring(oneStr.indexOf(":") + 1);
-            String[] splittedString = oneStr.split(",");
+                List<Integer> nextNodesWeights = new ArrayList<>();
 
-            for (int j = 0; j < splittedString.length; j++){
-                int nextNodeWeight = Integer.parseInt(splittedString[j]);
+                oneStr = oneStr.replace(" ", "");
+                oneStr = oneStr.substring(oneStr.indexOf(":") + 1);
+                String[] splittedString = oneStr.split(",");
 
-                if(nextNodeWeight > 0) {
-                    nextNodes.add(j + 1);
-                    nextNodesWeights.add(nextNodeWeight);
+                for (int j = 0; j < splittedString.length; j++) {
+                    int nextNodeWeight = Integer.parseInt(splittedString[j]);
+
+                    if (nextNodeWeight > 0) {
+                        nextNodes.add(j + 1);
+                        nextNodesWeights.add(nextNodeWeight);
+                    }
+                }
+
+                if (nextNodes.isEmpty() || nextNodesWeights.isEmpty()) {
+                    graph.add(new DekstraNode(new Node(nodeNumber, null, null)));
+                }
+                else {
+                    graph.add(new DekstraNode(new Node(nodeNumber, nextNodes, nextNodesWeights)));
                 }
             }
-
-            if(nextNodes.isEmpty() || nextNodesWeights.isEmpty()) {
-                graph.add(new DekstraNode(new Node(nodeNumber, null, null)));
-            }
-            else{
-                graph.add(new DekstraNode(new Node(nodeNumber, nextNodes, nextNodesWeights)));
-            }
+        }
+        catch(Exception e){
+            e.printStackTrace();
+            return AlertCommands.ERROR_RESULT;
         }
 
         return AlertCommands.RIGHTS_RESULT;
