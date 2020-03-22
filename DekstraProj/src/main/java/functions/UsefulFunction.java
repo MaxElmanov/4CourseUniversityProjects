@@ -1,5 +1,10 @@
 package functions;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import objects.DekstraNode;
 import objects.Graph;
 
@@ -266,5 +271,40 @@ public class UsefulFunction
         }
 
         return tempList;
+    }
+
+    public static void removeCanvasObjectsByID(Pane canvas, String IdToRemove){
+        if (canvas == null) return;
+        if (canvas.getChildren() == null) return;
+        if (canvas.getChildren().isEmpty()) return;
+        if (IdToRemove == null) return;
+        if (IdToRemove.isEmpty()) return;
+
+        ObservableList<Node> gridNodesList = canvas.getChildren();
+
+        //region Clear UI objects
+        boolean nodeIdMustBeRemoved = false;
+        ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
+        for (Node node : gridNodesList) {
+            String node_ID = node.getId();
+
+            if (IdToRemove.equalsIgnoreCase(node_ID)) {
+                nodeIdMustBeRemoved = true;
+                break;
+            }
+
+            if(nodeIdMustBeRemoved == false) {
+                newGridNodesList.add(node);
+            }
+
+            nodeIdMustBeRemoved = false;
+        }
+
+        gridNodesList.clear();
+
+        for (Node savedNode : newGridNodesList) {
+            gridNodesList.add(savedNode);
+        }
+        //endregion
     }
 }

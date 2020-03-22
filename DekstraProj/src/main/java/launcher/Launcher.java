@@ -27,7 +27,7 @@ import logics.GraphDrawer;
 import logics.RandomGraphGenerator;
 import objects.DekstraNode;
 import objects.Graph;
-import objects.MyCircle;
+import objects.MyCircleNode;
 import objects.MySpinner;
 
 import java.io.File;
@@ -42,7 +42,8 @@ public class Launcher extends Application
     private GridPane grid;
     private Pane canvas;
 
-    private static List<MyCircle> circles = new ArrayList<>();
+    private static List<MyCircleNode> circlesNodesOnCanvas = new ArrayList<>();
+    private static List<Text> nodeNumbersOnCanvas = new ArrayList<>();
     private static List<Label> rootAndTargetNode_labels_forRunStage = new ArrayList<>();
     private static ObservableList<MySpinner<Integer>> rootAndTargetNode_spinners_forRunStage = FXCollections.observableArrayList();;
 
@@ -64,6 +65,7 @@ public class Launcher extends Application
 //        graph.add(new DekstraNode(new Node(14,  Arrays.asList(13),   Arrays.asList(3))));
 //        graph.add(new DekstraNode(new Node(15,  Arrays.asList(13),   Arrays.asList(3))));
        Application.launch();
+
     }
 
     @Override
@@ -103,7 +105,7 @@ public class Launcher extends Application
         MenuBar menuBar = new MenuBar();
         menuBar.setCursor(Cursor.HAND);
         menuBar.setMinWidth(Constants.SCREEN_WEIGHT);
-        menuBar.setId("Menu_ID");
+        menuBar.setId(Constants.MENU_ID);
 
         Menu main_menu = new Menu("Main");
         Menu prepare_menu = new Menu("Preparation");
@@ -121,6 +123,8 @@ public class Launcher extends Application
             if (file != null) {
                 try {
                     //region Before upload execution Cleaning
+                    //firstly, we must remove left side objects if they exist
+                    clearWorkingAreaObjectsWithID(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
                     clearGraphNodes();
                     clearCanvasObjects();
                     clearCircles();
@@ -135,15 +139,14 @@ public class Launcher extends Application
                     alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. Check for it.");
                     alertMap.put(alertCommand.ERROR_RESULT, "You uploaded an empty or invalid file. Check out for it.");
                     //endregion
-                    boolean continueExecution = checkResultCommandForWarningAndError(alertCommand, alertMap, grid);
+                    boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
                     if(!continueExecution) {
-                        clearWorkingAreaExceptIDs("Menu_ID");
+                        clearWorkingAreaExceptIDs(Constants.MENU_ID);
                         return;
                     }
 
-                    getAndAddToGridRootAndTargetNodes_labels_spinners(grid, graph.Nodes().size());
+                    getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
                     Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
-                    canvas = addCanvas();
 
                     //region Visibility setup for run stage objects
                     runButton.setVisible(true);
@@ -157,13 +160,14 @@ public class Launcher extends Application
 
                     grid.add(runButton, 0, 3, 1, 1);
 
+                    canvas = addCanvas(runButton);
                     grid.add(canvas, 2, 1, 8, 9);
 
                     //inform user to start landing nodes
                     createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
 
                     //region After upload execution Cleaning
-                    clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID", "LeftSideObject_for_before_run_stage_ID");
+                    clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
                     //endregion
                 }
                 catch (IOException e1) {
@@ -178,43 +182,46 @@ public class Launcher extends Application
         setUpParameters_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/setUpParams_mi.png"))));
         setUpParameters_mi.setOnAction((e) -> {
             //region Cleaning working area except menuBar
-            clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID");
+            clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID);
             clearGraphNodes();
             clearCanvasObjects();
             clearCircles();
             //endregion
             //region Spinners & Labels creation
             Label nodesAmount_lbl = createNewLabel("Nodes amount", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.CENTER, false);
-            nodesAmount_lbl.setId("LeftSideObject_for_generation_stage_ID");
+            nodesAmount_lbl.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             MySpinner<Integer> nodesAmount_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER, Constants.MAX_GENERATED_NUMBER, Constants.defaultInitialValueForSpinner, HPos.CENTER);
-            nodesAmount_spinner.setId("LeftSideObject_for_generation_stage_ID");
+            nodesAmount_spinner.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             Label edgesAmount_lbl = createNewLabel("Edges amount", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.CENTER, false);
-            edgesAmount_lbl.setId("LeftSideObject_for_generation_stage_ID");
+            edgesAmount_lbl.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             MySpinner<Integer> edgesAmount_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER, Constants.MAX_GENERATED_NUMBER, Constants.defaultInitialValueForSpinner, HPos.CENTER);
-            edgesAmount_spinner.setId("LeftSideObject_for_generation_stage_ID");
+            edgesAmount_spinner.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
 
             Label weightsValuesRange_lbl = createNewLabel("Weights values range [1-50]", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.CENTER, false);
-            weightsValuesRange_lbl.setId("LeftSideObject_for_generation_stage_ID");
+            weightsValuesRange_lbl.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             Label weightsValuesRange_FROM_lbl = createNewLabel("from", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
-            weightsValuesRange_FROM_lbl.setId("LeftSideObject_for_generation_stage_ID");
+            weightsValuesRange_FROM_lbl.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             MySpinner<Integer> weightsValuesRange_FROM_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER,
                                                                                   Constants.MAX_GENERATED_NUMBER,
                                                                                   Constants.defaultInitialValueForSpinner,
                                                                                   HPos.CENTER);
-            weightsValuesRange_FROM_spinner.setId("LeftSideObject_for_generation_stage_ID");
+            weightsValuesRange_FROM_spinner.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             Label weightsValuesRange_TO_lbl = createNewLabel("to", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
+            weightsValuesRange_TO_lbl.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             MySpinner<Integer> weightsValuesRange_TO_spinner = createNewSpinner(Constants.MIN_GENERATED_NUMBER,
                                                                                 Constants.MAX_GENERATED_NUMBER,
                                                                                 Constants.defaultInitialValueForSpinner,
                                                                                 HPos.CENTER);
-            weightsValuesRange_TO_spinner.setId("LeftSideObject_for_generation_stage_ID");
+            weightsValuesRange_TO_spinner.setId(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID);
             //endregion
             //region generateRandomGraph_btn settings
             Button generateRandomGraph_btn = new Button("Generate");
-            generateRandomGraph_btn.setId("LeftSideObject_for_generation_stage_ID");
+            generateRandomGraph_btn.setId(Constants.GENERATE_RANDOM_GRAPH_BUTTON_ID);
             generateRandomGraph_btn.setMaxSize(80, 30);
             generateRandomGraph_btn.setOnAction((e_2) -> {
-                getAndAddToGridRootAndTargetNodes_labels_spinners(grid, nodesAmount_spinner.getCurrentValue());
+                generateRandomGraph_btn.setVisible(false);
+
+                getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, nodesAmount_spinner.getCurrentValue(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
                 Button runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
 
                 RandomGraphGenerator randomGraphGenerator = new RandomGraphGenerator(graph,
@@ -229,11 +236,12 @@ public class Launcher extends Application
                 alertMap.put(alertCommand.RIGHTS_RESULT, "Random graph was successfully built.");
                 alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. Check for it.");
                 alertMap.put(alertCommand.ERROR_RESULT, "Random graph can not be build. Check for entered parameters.");
-                //endregion
-                boolean continueExecution = checkResultCommandForWarningAndError(alertCommand, alertMap,  grid);
+
+                boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
                 if(!continueExecution) {
                     return;
                 }
+                //endregion
 
                 //region Visibility setup for run stage objects
                 runButton.setVisible(true);
@@ -247,13 +255,15 @@ public class Launcher extends Application
 
                 grid.add(runButton, 0, 3, 2, 1);
 
-                grid.add(addCanvas(), 2, 1, 8, 9);
+                canvas = addCanvas(runButton);
+                grid.add(canvas, 2, 1, 8, 9);
+
+                clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID, Constants.GENERATE_RANDOM_GRAPH_BUTTON_ID);
 
                 //inform user to start landing nodes
                 createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
-
-                clearWorkingAreaExceptIDs("Menu_ID", "Canvas_ID", "LeftSideObject_for_before_run_stage_ID");
             });
+
             GridPane.setHalignment(generateRandomGraph_btn, HPos.RIGHT);
             //endregion
             //region Addition to grid
@@ -285,7 +295,7 @@ public class Launcher extends Application
         MenuItem clear_working_area_mi = new MenuItem("Clear working area");
         clear_working_area_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_working_area_mi.png"))));
         clear_working_area_mi.setOnAction((e) -> {
-            clearWorkingAreaExceptIDs("Menu_ID");
+            clearWorkingAreaExceptIDs(Constants.MENU_ID);
         });
         //endregion
 
@@ -312,7 +322,7 @@ public class Launcher extends Application
         return grid;
     }
 
-    private boolean checkResultCommandForWarningAndError(AlertCommands resultCommand, Map<AlertCommands, String> alertMap, GridPane grid)
+    private boolean checkCommandResultForWarningAndError(AlertCommands resultCommand, Map<AlertCommands, String> alertMap, GridPane grid)
     {
         boolean continueExecution = true;
 
@@ -332,7 +342,7 @@ public class Launcher extends Application
                 break;
             }
             default:
-                clearWorkingAreaExceptIDs("Menu_ID");
+                clearWorkingAreaExceptIDs(Constants.MENU_ID);
                 clearCircles();
                 clearCanvasObjects();
                 clearGraphNodes();
@@ -351,31 +361,42 @@ public class Launcher extends Application
         alert.showAndWait();
     }
 
-    private Pane addCanvas()
+    private Pane addCanvas(Node runButton)
     {
         canvas = new Pane();
-        canvas.setId("Canvas_ID");
+        canvas.setId(Constants.CANVAS_ID);
         canvas.setBackground(new Background(new BackgroundFill(Constants.CANVAS_BACKGROUND_COLOR, null, null)));
         canvas.setMinWidth(Constants.SCREEN_WEIGHT * Constants.CANVAS_WEIGHT_IN_PERCENT);
         canvas.setMinHeight(Constants.SCREEN_HEIGHT * Constants.CANVAS_HEIGHT_IN_PERCENT);
         canvas.setBorder(new Border(new BorderStroke(Constants.CANVAS_BORDER_COLOR, BorderStrokeStyle.SOLID, null, Constants.CANVAS_BORDER_WIDTH)));
-        canvas.setOnMouseClicked(e->{
+        canvas.setOnMouseClicked( e->{
+            //if graph was created by random method then "generateRandomGraph_btn" remains in hidden state. Due to that we must remove this hidden button from the canvas
+            clearWorkingAreaObjectsWithID(Constants.GENERATE_RANDOM_GRAPH_BUTTON_ID);
             //check for max nodes amount which can be set up on the canvas
-            if(circles.size() >= graph.Nodes().size()) {
-                createAlert(Alert.AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
+            if(circlesNodesOnCanvas.size() >= graph.Nodes().size()) {
+                //createAlert(Alert.AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
                 return;
             }
 
-            MyCircle myCircle = new MyCircle(e.getX(), e.getY(), Constants.NODE_RADIUS, Constants.NODE_COLOR, graph);
-            Text text = myCircle.getUnusedNodeNumberAsText(e.getX(), e.getY());
-            canvas.getChildren().addAll(myCircle, text);
-            circles.add(myCircle);
+            MyCircleNode circleNode = new MyCircleNode(e.getX(), e.getY(), Constants.NODE_RADIUS, Constants.NODE_COLOR, graph, canvas, grid);
+            Text nodeNumberText = circleNode.getUnusedNodeNumberAsText();
+            circlesNodesOnCanvas.add(circleNode);
+            nodeNumbersOnCanvas.add(nodeNumberText);
+            canvas.getChildren().add(circleNode);
+            canvas.getChildren().add(nodeNumberText);
 
             //check for last added node on canvas
-            if(circles.size() == graph.Nodes().size()) {
-                GraphDrawer.drawGraphEdges(graph, canvas);
+            if(circlesNodesOnCanvas.size() == graph.Nodes().size()) {
+                GraphDrawer.drawGraphEdges(graph, canvas, grid);
 
-                //set spinners for root and target nodes DISABLE as FALSE
+                //set up events handlers for every circles nodes on canvas
+                for (MyCircleNode cNode : circlesNodesOnCanvas){
+                    cNode.setUpSettings();
+                }
+
+                //set runButton, spinners for root and target nodes DISABLE as FALSE. In other words, activate them
+                runButton.setDisable(false);
+
                 for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
                     spinner.setDisable(false);
                 }
@@ -389,7 +410,8 @@ public class Launcher extends Application
     {
         Button runButton = new Button("Run");
         runButton.setVisible(false);
-        runButton.setId("LeftSideObject_for_before_run_stage_ID");
+        runButton.setDisable(true);
+        runButton.setId(Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
         GridPane.setHalignment(runButton, HPos.RIGHT);
         runButton.setCursor(Cursor.HAND);
         runButton.setOnAction((e_2) -> {
@@ -412,7 +434,7 @@ public class Launcher extends Application
             alertMap.put(alertCommand.RIGHTS_RESULT, "Algorithm was successfully performed.");
             alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. There is no such a path. Check for it.");
             alertMap.put(alertCommand.ERROR_RESULT, "Error. There is no such a path.");
-            boolean continueExecution = checkResultCommandForWarningAndError(alertCommand, alertMap, grid);
+            boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
             if(!continueExecution) {
                 setUpGraphNodesAsUnusedInForwardAlthm();
                 return;
@@ -423,7 +445,7 @@ public class Launcher extends Application
             Pane tempCanvas = canvas;
 
             //region Cleaning working area except menuBar
-            clearWorkingAreaExceptIDs("Menu_ID");
+            clearWorkingAreaExceptIDs(Constants.MENU_ID);
             //endregion
 
             //region Total path(s) amount label
@@ -434,7 +456,7 @@ public class Launcher extends Application
                                                         5,
                                                         HPos.LEFT,
                                                         false);
-            totalAmountPaths_lbl.setId("LeftSideObject_for_after_run_stage_ID");
+            totalAmountPaths_lbl.setId(Constants.LEFTSIDE_OBJECT_FOR_AFTER_RUN_STAGE_ID);
             grid.add(totalAmountPaths_lbl, 0, 1, 1, 1);
             //endregion
 
@@ -446,7 +468,7 @@ public class Launcher extends Application
                                                        5,
                                                        HPos.LEFT,
                                                        false);
-            bestPathsWeight_lbl.setId("LeftSideObject_for_after_run_stage_ID");
+            bestPathsWeight_lbl.setId(Constants.LEFTSIDE_OBJECT_FOR_AFTER_RUN_STAGE_ID);
             grid.add(bestPathsWeight_lbl, 0, 2, 1, 1);
             //endregion
 
@@ -458,7 +480,7 @@ public class Launcher extends Application
                                                           5,
                                                           HPos.LEFT,
                                                           false);
-            bestPathsWeight_lbl.setId("LeftSideObject_for_after_run_stage_ID");
+            bestPathsWeight_lbl.setId(Constants.LEFTSIDE_OBJECT_FOR_AFTER_RUN_STAGE_ID);
             grid.add(algorithmSpentTime_lbl, 0, 3, 1, 1);
             //endregion
 
@@ -471,7 +493,7 @@ public class Launcher extends Application
 //
             ObservableList<String> mapOutputInfo = FXCollections.observableArrayList(UsefulFunction.getMapContent(algorithm.getMap()));
             ListView<String> outputInfo_listView = new ListView<>(mapOutputInfo);
-            outputInfo_listView.setId("LeftSideObject_for_after_run_stage_ID");
+            outputInfo_listView.setId(Constants.LEFTSIDE_OBJECT_FOR_AFTER_RUN_STAGE_ID);
             grid.add(outputInfo_listView, 0, 4, 1, 6);
             //endregion
 
@@ -488,18 +510,18 @@ public class Launcher extends Application
         }
     }
 
-    private void getAndAddToGridRootAndTargetNodes_labels_spinners(GridPane grid, Integer nodesAmount)
+    private void getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(GridPane grid, Integer nodesAmount, String leftsideObjectId)
     {
         //region Root node label
         Label rootNode_lbl = createNewLabel("Root node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
-        rootNode_lbl.setId("LeftSideObject_for_before_run_stage_ID");
+        rootNode_lbl.setId(leftsideObjectId);
         rootNode_lbl.setVisible(false);
         grid.add(rootNode_lbl, 0, 1, 1, 1);
         //endregion
 
         //region Root node spinner
         MySpinner<Integer> spinnerForRootNode = createNewSpinner(Constants.MIN_GENERATED_NUMBER, nodesAmount, Constants.defaultInitialValueForSpinner, HPos.RIGHT);
-        spinnerForRootNode.setId("LeftSideObject_for_before_run_stage_ID");
+        spinnerForRootNode.setId(leftsideObjectId);
         spinnerForRootNode.setVisible(false);
         spinnerForRootNode.setDisable(true);
         grid.add(spinnerForRootNode, 1, 1, 1, 1);
@@ -507,14 +529,14 @@ public class Launcher extends Application
 
         //region Target node label
         Label targetNode_lbl = createNewLabel("Target node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
-        targetNode_lbl.setId("LeftSideObject_for_before_run_stage_ID");
+        targetNode_lbl.setId(leftsideObjectId);
         targetNode_lbl.setVisible(false);
         grid.add(targetNode_lbl, 0, 2, 1, 1);
         //endregion
 
         //region Target node spinner
         MySpinner<Integer> spinnerForTargetNode = createNewSpinner(Constants.MIN_GENERATED_NUMBER, nodesAmount, Constants.defaultInitialValueForSpinner, HPos.RIGHT);
-        spinnerForTargetNode.setId("LeftSideObject_for_before_run_stage_ID");
+        spinnerForTargetNode.setId(leftsideObjectId);
         spinnerForTargetNode.setVisible(false);
         spinnerForTargetNode.setDisable(true);
         grid.add(spinnerForTargetNode, 1, 2, 1, 1);
@@ -562,7 +584,7 @@ public class Launcher extends Application
 
         List<String> exceptIds = Arrays.asList(exceptIdsInArray);
 
-        if(gridNodesList == null || gridNodesList.isEmpty()) return;
+        if(gridNodesList == null || gridNodesList.isEmpty() || exceptIdsInArray == null || exceptIdsInArray.length == 0) return;
 
         //region Clear UI objects
         ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
@@ -572,7 +594,7 @@ public class Launcher extends Application
             if (node_ID == null || node_ID.isEmpty()) continue;
 
             for (String exceptId : exceptIds){
-                if (node_ID.equalsIgnoreCase(exceptId)) {
+                if (exceptId.equalsIgnoreCase(node_ID)) {
                     newGridNodesList.add(node);
                     break;
                 }
@@ -596,16 +618,23 @@ public class Launcher extends Application
         if(gridNodesList == null || gridNodesList.isEmpty() || IDsToRemove == null || IDsToRemove.isEmpty()) return;
 
         //region Clear UI objects
+        boolean nodeIdMustBeRemoved = false;
         ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
         for (Node node : gridNodesList) {
             String node_ID = node.getId();
 
             for (String idToRemove : IDsToRemove){
-                if (!node_ID.equalsIgnoreCase(idToRemove)) {
-                    newGridNodesList.add(node);
+                if (idToRemove.equalsIgnoreCase(node_ID)) {
+                    nodeIdMustBeRemoved = true;
                     break;
                 }
             }
+
+            if(nodeIdMustBeRemoved == false) {
+                newGridNodesList.add(node);
+            }
+
+            nodeIdMustBeRemoved = false;
         }
 
         gridNodesList.clear();
@@ -661,9 +690,9 @@ public class Launcher extends Application
 
     private void clearCircles()
     {
-        if(circles != null) {
-            if(!circles.isEmpty()) {
-                circles.clear();
+        if(circlesNodesOnCanvas != null) {
+            if(!circlesNodesOnCanvas.isEmpty()) {
+                circlesNodesOnCanvas.clear();
             }
         }
     }

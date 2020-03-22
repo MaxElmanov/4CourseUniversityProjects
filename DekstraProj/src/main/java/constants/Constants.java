@@ -28,6 +28,7 @@ public class Constants
     public static final Color WHITE_THEME_TEXT_COLOR = Color.rgb(0, 0, 0);
     public static final Color DARK_THEME_TEXT_COLOR = Color.rgb(255, 255, 255);
     public static final Color NODE_COLOR = Color.rgb(30, 144, 255);
+    public static final Color TEMP_NODE_COLOR = Color.rgb(255, 242, 17);
     public static final Color EDGE_COLOR = Color.rgb(46, 139, 87);
     public static final Color EDGE_ARROW_TIP_COLOR = Color.rgb(64,128,0);
     public static final Paint CANVAS_BORDER_COLOR = Color.rgb(112, 128, 144);
@@ -55,4 +56,15 @@ public class Constants
     public static final double CURVE_EDGE_OFFSET_ON_CANVAS = 20;//px
     public static final double DISTANCE_FROM_LINE_ARROW_TIP = 15;//px
     public static final double SIDE_DISTANCE_FROM_LINE = 7;//px
+    //IDS
+    public static final String EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID = "Edges_PolyLineTextCircle_ID";
+    public static final String CANVAS_ID = "Canvas_ID";
+    public static final String MENU_ID = "Menu_ID";
+    public static final String LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID = "LeftSideObject_For_Before_Run_Stage_ID";
+    public static final String LEFTSIDE_OBJECT_FOR_AFTER_RUN_STAGE_ID = "LeftSideObject_For_After_Run_Stage_ID";
+    public static final String LEFTSIDE_OBJECT_SETUP_MANUALLY_ID = "LeftSideObject_Setup_Manually_ID";
+    public static final String NODE_NUMBER = "Node_Number_ID_";
+    public static final String TEMP_YELLOW_NODE_ID = "Temp_Yellow_Node_ID";
+    public static final String GENERATE_RANDOM_GRAPH_BUTTON_ID = "Generate_Random_Button_ID";
+
 }

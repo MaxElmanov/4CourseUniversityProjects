@@ -2,8 +2,10 @@ package logics;
 
 import constants.Constants;
 import functions.UsefulFunction;
-import javafx.scene.canvas.Canvas;
-import javafx.scene.canvas.GraphicsContext;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.scene.Node;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
@@ -11,19 +13,20 @@ import javafx.scene.text.Text;
 import objects.DekstraNode;
 import objects.Graph;
 
+import java.util.Arrays;
 import java.util.List;
-import java.util.Random;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 public class GraphDrawer
 {
     private static Graph graph;
-    private static Pane pane;
+    private static GridPane grid;
+    private static Pane canvas;
 
-    private static void init(Pane pane, Graph graph)
+    private static void init(Pane canvas, Graph graph, GridPane grid)
     {
         GraphDrawer.graph = graph;
-        GraphDrawer.pane = pane;
+        GraphDrawer.canvas = canvas;
+        GraphDrawer.grid = grid;
     }
 
 //    public static void drawGraphEdges(Canvas canvas, GraphicsContext gc, Graph graph)
@@ -81,9 +84,9 @@ public class GraphDrawer
 //        //endregion
 //    }
 
-    public static void drawGraphEdges(Graph graph, Pane pane)
+    public static void drawGraphEdges(Graph graph, Pane canvas, GridPane grid)
     {
-        init(pane, graph);
+        init(canvas, graph, grid);
 
         //region Edges drawing
         for (DekstraNode startNode : graph.Nodes()) {
@@ -106,19 +109,22 @@ public class GraphDrawer
                     double circleCenterX = startX + Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS - Constants.ONE_NODE_CIRCLE_EDGE_STRANGE_OFFSET;
                     double circleCenterY = startY + Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS - Constants.ONE_NODE_CIRCLE_EDGE_STRANGE_OFFSET;
                     Circle circleOneNodeEdge = new Circle(circleCenterX, circleCenterY, Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS, Constants.NODE_COLOR);
+                    circleOneNodeEdge.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     circleOneNodeEdge.setFill(Constants.CANVAS_BACKGROUND_COLOR);
                     circleOneNodeEdge.setStroke(Constants.EDGE_COLOR);
                     circleOneNodeEdge.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
                     int weight = startNode.getWeights().get(nextNodeIndex);
                     Text nodeWeight_txt = getEdgeWeightForCircleLineAsText(circleCenterX, circleCenterY, Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS, weight);
+                    nodeWeight_txt.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     //Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
-                    pane.getChildren().addAll(circleOneNodeEdge, nodeWeight_txt);
+                    canvas.getChildren().addAll(circleOneNodeEdge, nodeWeight_txt);
                     //endregion
                 }
                 else if (nextNodeHasEdgeToStartNode(startNode, nextNode)) {
                     //region Polyline settings
                     double[] polylinePoints = getListPointsForPolyline(startX, startY, endX, endY);
                     Polyline polyline = new Polyline(polylinePoints);
+                    polyline.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     polyline.setFill(Constants.CANVAS_BACKGROUND_COLOR);
                     polyline.setStroke(Constants.EDGE_COLOR);
                     polyline.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
@@ -126,20 +132,25 @@ public class GraphDrawer
                     double biasedCoordX = polylinePoints[2];
                     double biasedCoordY = polylinePoints[3];
                     Text nodeWeight_txt = getEdgeWeightForCurveLineAsText(biasedCoordX, biasedCoordY, weight);
+                    nodeWeight_txt.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
-                    pane.getChildren().addAll(polyline, nodeWeight_txt, lineTip);
+                    lineTip.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
+                    canvas.getChildren().addAll(polyline, nodeWeight_txt, lineTip);
                     //endregion
                 }
                 else {
                     //region Line settings
                     Line line = new Line(startX, startY, endX, endY);
+                    line.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     line.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
                     line.setStroke(Constants.EDGE_COLOR);
                     int weight = startNode.getWeights().get(nextNodeIndex);
                     Text nodeWeight_txt = getEdgeWeightForDirectLineAsText(startX, startY, endX, endY, weight);
+                    nodeWeight_txt.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     //Tip getting
                     Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
-                    pane.getChildren().addAll(line, nodeWeight_txt, lineTip);
+                    lineTip.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
+                    canvas.getChildren().addAll(line, nodeWeight_txt, lineTip);
                     //endregion
                 }
             }
@@ -172,9 +183,13 @@ public class GraphDrawer
         }
         //endregion
 
+        if(startX == 0 && startY == 0 && endX == 0 && endY == 0) {
+            int a = 5;
+        }
+
         double degree = getAngleDirectionToCenterInDegrees(startX, startY, endX, endY);
 
-        //Calculate direction. get what side arrow will point? BOTTOM and RIGHT is not necessary because ,for example, if UP is true then BOTTOM is false, etc
+        //Calculate direction. Get what side arrow will point? BOTTOM and RIGHT is not necessary because ,for example, if UP is true then BOTTOM is false, etc
         //boolean isUp = isDirectUp(startY, endY);
         //boolean isLeft = isDirectLeft(startX, endX);
 
@@ -199,7 +214,7 @@ public class GraphDrawer
             rightTipY = leftTipY;
             //endregion
         }
-        if (degree == Constants.DEGREES_180) { // horizontal direct 180
+        else if (degree == Constants.DEGREES_180) { // horizontal direct 180
             //region Horizontal direct 180
             newEndX = endX - Constants.NODE_RADIUS;
             newEndY = endY;
@@ -432,7 +447,7 @@ public class GraphDrawer
             lineCenterX -= Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
             lineCenterY += Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
         }
-        else if (degrees == Constants.DEGREES_0 || degrees == Constants.DEGREES_180) { //[-Y] OR [+Y]
+        else if (degrees == Constants.DEGREES_0 || degrees == Constants.DEGREES_180 || degrees == Constants.DEGREES_360) { //[-Y] OR [+Y]
             lineCenterY -= Constants.CURVE_EDGE_OFFSET_ON_CANVAS;
         }
         else if (degrees == Constants.DEGREES_90 || degrees == Constants.DEGREES_270) {//[+X] OR [-X]
@@ -619,14 +634,6 @@ public class GraphDrawer
         return text;
     }
 
-    private static int getRandomIndex(int from, int to)
-    {
-        int diff = to - from;
-        int randomIndex = new Random().nextInt(diff + 1);
-        randomIndex += from;
-        return randomIndex;
-    }
-
     public static void main(String[] args)
     {
         double degrees = getAngleDirectionFromCenterInDegrees(30, 30, 50, 30);
@@ -666,5 +673,50 @@ public class GraphDrawer
         System.out.println(degrees14);
         System.out.println(degrees15);
         System.out.println(degrees16);
+    }
+
+    public static void clearGraphEdges(Pane canvas, int nodeNumber)
+    {
+        clearCanvasObjectsWithID(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID, Constants.NODE_NUMBER + nodeNumber);
+    }
+
+    private static void clearCanvasObjectsWithID(String... IDsToRemoveInArray)
+    {
+        if (canvas == null) return;
+        if (canvas.getChildren() == null) return;
+        if (canvas.getChildren().isEmpty()) return;
+
+        ObservableList<Node> gridNodesList = canvas.getChildren();
+        //convert array to list
+        List<String> IDsToRemove = Arrays.asList(IDsToRemoveInArray);
+
+        if(IDsToRemove == null || IDsToRemove.isEmpty()) return;
+
+        //region Clear UI objects
+        boolean nodeIdMustBeRemoved = false;
+        ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
+        for (Node node : gridNodesList) {
+            String node_ID = node.getId();
+
+            for (String idToRemove : IDsToRemove){
+                if (idToRemove.equalsIgnoreCase(node_ID)) {
+                    nodeIdMustBeRemoved = true;
+                    break;
+                }
+            }
+
+            if(nodeIdMustBeRemoved == false) {
+                newGridNodesList.add(node);
+            }
+
+            nodeIdMustBeRemoved = false;
+        }
+
+        gridNodesList.clear();
+
+        for (Node savedNode : newGridNodesList) {
+            gridNodesList.add(savedNode);
+        }
+        //endregion
     }
 }

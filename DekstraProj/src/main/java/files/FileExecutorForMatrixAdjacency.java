@@ -13,7 +13,7 @@ import java.util.List;
 
 public class FileExecutorForMatrixAdjacency
 {
-    private File file;
+    private File file = null;
 
     public FileExecutorForMatrixAdjacency() {}
 
@@ -78,7 +78,7 @@ public class FileExecutorForMatrixAdjacency
             }
         }
         catch(Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
             return AlertCommands.ERROR_RESULT;
         }
 
