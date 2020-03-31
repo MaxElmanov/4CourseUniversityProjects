@@ -1,4 +1,4 @@
-package functions;
+package commonUsefulFunctions;
 
 public class Timer
 {

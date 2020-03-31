@@ -1,9 +1,10 @@
 package launcher;
 
+import com.sun.org.apache.xpath.internal.operations.Bool;
 import constants.AlertCommands;
 import constants.Constants;
 import files.FileExecutorForMatrixAdjacency;
-import functions.UsefulFunction;
+import commonUsefulFunctions.UsefulFunction;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -42,10 +43,14 @@ public class Launcher extends Application
     private GridPane grid;
     private Pane canvas;
 
+    //UI variables
     private static List<MyCircleNode> circlesNodesOnCanvas = new ArrayList<>();
     private static List<Text> nodeNumbersOnCanvas = new ArrayList<>();
     private static List<Label> rootAndTargetNode_labels_forRunStage = new ArrayList<>();
-    private static ObservableList<MySpinner<Integer>> rootAndTargetNode_spinners_forRunStage = FXCollections.observableArrayList();;
+    private static ObservableList<MySpinner<Integer>> rootAndTargetNode_spinners_forRunStage = FXCollections.observableArrayList();
+    private static Boolean resetWorkingAreaButtonFlag = false;
+    private static Boolean uploadFileFlag = false;
+    private static Boolean setUpManuallyFlag = false;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException
     {
@@ -98,10 +103,10 @@ public class Launcher extends Application
         grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
-        grid.setPadding(new Insets(0, 5, 0, 5));
+        grid.setPadding(new Insets(0, 0, 0, 0));
         //endregion
 
-        //region menuBar
+        //region (menuBar)
         MenuBar menuBar = new MenuBar();
         menuBar.setCursor(Cursor.HAND);
         menuBar.setMinWidth(Constants.SCREEN_WEIGHT);
@@ -110,10 +115,79 @@ public class Launcher extends Application
         Menu main_menu = new Menu("Main");
         Menu prepare_menu = new Menu("Preparation");
 
-        //region Upload menuItem
+        //region Upload (menuItem)
         MenuItem uploadFromFile_mi = new MenuItem("Upload a graph from file");
         uploadFromFile_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/uploadButton_mi.png"))));
         uploadFromFile_mi.setOnAction(((e) -> {
+            uploadFileFlag = true;
+            setUpManuallyFlag = false;
+            getCanvasObjectsWithBeforeRunStageIDs(primaryStage);
+        }));
+        //endregion
+
+        //region SetUp graph parameters (menuItem)
+        MenuItem setUpParameters_mi = new MenuItem("Set up a random graph");
+        setUpParameters_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/setUpParams_mi.png"))));
+        setUpParameters_mi.setOnAction((e) -> {
+            setUpManuallyFlag = true;
+            uploadFileFlag = false;
+            getCanvasObjectsWithBeforeRunStageIDs(primaryStage);
+        });
+        //endregion
+
+        //region exit (menuItem)
+        MenuItem exit_mi = new MenuItem("Exit");
+        exit_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/exit_mi.png"))));
+        exit_mi.setOnAction((e) -> {
+            System.exit(0);
+        });
+        //endregion
+
+        //region Reset(return) finding short path_operation (menuItem)
+        MenuItem reset_find_short_path_operation = new MenuItem("Reset working area");
+        reset_find_short_path_operation.setDisable(resetWorkingAreaButtonFlag);
+        reset_find_short_path_operation.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/reset_find_short_path_operation.png"))));
+        reset_find_short_path_operation.setOnAction((e) -> {
+
+        });
+        //endregion
+
+        //region Clear working area (menuItem)
+        MenuItem clear_working_area_mi = new MenuItem("Clear working area");
+        clear_working_area_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_working_area_mi.png"))));
+        clear_working_area_mi.setOnAction((e) -> {
+            clearWorkingAreaExceptIDs(Constants.MENU_ID);
+        });
+        //endregion
+
+        //region Clear canvas objects (menuItem)
+        MenuItem clear_canvas_objects_mi = new MenuItem("Clear canvas objects");
+        clear_canvas_objects_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_canvas_objects_mi.png"))));
+        clear_canvas_objects_mi.setOnAction((e) -> {
+            clearCanvasObjects();
+            clearCircles();
+        });
+        //endregion
+
+        main_menu.getItems().add(uploadFromFile_mi);
+        main_menu.getItems().add(setUpParameters_mi);
+        main_menu.getItems().add(exit_mi);
+
+        prepare_menu.getItems().add(reset_find_short_path_operation);
+        prepare_menu.getItems().add(clear_working_area_mi);
+        prepare_menu.getItems().add(clear_canvas_objects_mi);
+
+        menuBar.getMenus().addAll(main_menu, prepare_menu);
+        grid.add(menuBar, 0, 0, 10, 1);
+        //endregion
+
+        return grid;
+    }
+
+    private void getCanvasObjectsWithBeforeRunStageIDs(Stage primaryStage){
+        if(uploadFileFlag) {
+            //region Upload a graph from file
+
             //region FileChooser
             final FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("TXT", "*.txt"));
@@ -124,7 +198,7 @@ public class Launcher extends Application
                 try {
                     //region Before upload execution Cleaning
                     //firstly, we must remove left side objects if they exist
-                    clearWorkingAreaObjectsWithID(Constants.LEFTSIDE_OBJECT_SETUP_MANUALLY_ID, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
+                    clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID);
                     clearGraphNodes();
                     clearCanvasObjects();
                     clearCircles();
@@ -158,29 +232,23 @@ public class Launcher extends Application
                     }
                     //endregion
 
-                    grid.add(runButton, 0, 3, 1, 1);
+                    grid.add(runButton, 1, 3, 1, 1);
 
                     canvas = addCanvas(runButton);
                     grid.add(canvas, 2, 1, 8, 9);
 
                     //inform user to start landing nodes
                     createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
-
-                    //region After upload execution Cleaning
-                    clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
-                    //endregion
                 }
                 catch (IOException e1) {
                     e1.printStackTrace();
                 }
             }
-        }));
-        //endregion
+            //endregion
+        }
+        else if (setUpManuallyFlag) {
+            //region Get up a graph manually
 
-        //region SetUp graph parameters menuItem
-        MenuItem setUpParameters_mi = new MenuItem("Set up a random graph");
-        setUpParameters_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/setUpParams_mi.png"))));
-        setUpParameters_mi.setOnAction((e) -> {
             //region Cleaning working area except menuBar
             clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID);
             clearGraphNodes();
@@ -253,7 +321,7 @@ public class Launcher extends Application
                 }
                 //endregion
 
-                grid.add(runButton, 0, 3, 2, 1);
+                grid.add(runButton, 1, 3, 1, 1);
 
                 canvas = addCanvas(runButton);
                 grid.add(canvas, 2, 1, 8, 9);
@@ -280,46 +348,12 @@ public class Launcher extends Application
 
             grid.add(generateRandomGraph_btn, 0, 6, 2, 1);
             //endregion
-        });
-        //endregion
+            //endregion
+        }
+        else{
+            UsefulFunction.throwException("Error: Check for top conditions and flags for upload an d setup strategies. Program couldn't go through this way.");
+        }
 
-        //region exit menuItem
-        MenuItem exit_mi = new MenuItem("Exit");
-        exit_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/exit_mi.png"))));
-        exit_mi.setOnAction((e) -> {
-            System.exit(0);
-        });
-        //endregion
-
-        //region Clear working area menuItem
-        MenuItem clear_working_area_mi = new MenuItem("Clear working area");
-        clear_working_area_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_working_area_mi.png"))));
-        clear_working_area_mi.setOnAction((e) -> {
-            clearWorkingAreaExceptIDs(Constants.MENU_ID);
-        });
-        //endregion
-
-        //region Clear canvas objects menuItem
-        MenuItem clear_canvas_objects_mi = new MenuItem("Clear canvas objects");
-        clear_canvas_objects_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/clear_canvas_objects_mi.png"))));
-        clear_canvas_objects_mi.setOnAction((e) -> {
-            clearCanvasObjects();
-            clearCircles();
-        });
-        //endregion
-
-        main_menu.getItems().add(uploadFromFile_mi);
-        main_menu.getItems().add(setUpParameters_mi);
-        main_menu.getItems().add(exit_mi);
-
-        prepare_menu.getItems().add(clear_working_area_mi);
-        prepare_menu.getItems().add(clear_canvas_objects_mi);
-
-        menuBar.getMenus().addAll(main_menu, prepare_menu);
-        grid.add(menuBar, 0, 0, 10, 1);
-        //endregion
-
-        return grid;
     }
 
     private boolean checkCommandResultForWarningAndError(AlertCommands resultCommand, Map<AlertCommands, String> alertMap, GridPane grid)
@@ -513,7 +547,7 @@ public class Launcher extends Application
     private void getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(GridPane grid, Integer nodesAmount, String leftsideObjectId)
     {
         //region Root node label
-        Label rootNode_lbl = createNewLabel("Root node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
+        Label rootNode_lbl = createNewLabel("Root node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.bigFontSize, 5, HPos.LEFT, false);
         rootNode_lbl.setId(leftsideObjectId);
         rootNode_lbl.setVisible(false);
         grid.add(rootNode_lbl, 0, 1, 1, 1);
@@ -528,7 +562,7 @@ public class Launcher extends Application
         //endregion
 
         //region Target node label
-        Label targetNode_lbl = createNewLabel("Target node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.defaultFontSize, 5, HPos.LEFT, false);
+        Label targetNode_lbl = createNewLabel("Target node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.bigFontSize, 5, HPos.LEFT, false);
         targetNode_lbl.setId(leftsideObjectId);
         targetNode_lbl.setVisible(false);
         grid.add(targetNode_lbl, 0, 2, 1, 1);

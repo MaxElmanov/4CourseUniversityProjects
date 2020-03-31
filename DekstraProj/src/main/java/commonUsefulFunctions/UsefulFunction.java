@@ -1,12 +1,10 @@
-package functions;
+package commonUsefulFunctions;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import objects.DekstraNode;
-import objects.Graph;
 
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArrayList;

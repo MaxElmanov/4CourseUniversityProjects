@@ -1,7 +1,7 @@
 package logics;
 
 import constants.Constants;
-import functions.UsefulFunction;
+import commonUsefulFunctions.UsefulFunction;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;

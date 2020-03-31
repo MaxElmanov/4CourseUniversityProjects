@@ -1,6 +1,6 @@
 package logics;
 
-import functions.UsefulFunction;
+import commonUsefulFunctions.UsefulFunction;
 import objects.DekstraNode;
 import objects.Graph;
 

@@ -1,6 +1,6 @@
 package objects;
 
-import functions.UsefulFunction;
+import commonUsefulFunctions.UsefulFunction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +40,51 @@ public class Graph
         UsefulFunction.throwException("The node with such number is not there");
         return null;
     }
+
+    public int getMaxGraphWidth() {
+        if(nodes == null) return 0;
+        if(nodes.isEmpty()) return 0;
+
+        //In the beginning "maxGraphWidth" equals 1 because "nodes"(graph) is not empty. Therefore, if even there will be only one node in the graph, graph width is gonna be 1
+        int maxGraphWidth = 1;
+
+        for (DekstraNode node : nodes){
+            List nextNodesList = node.getNextNodes();
+
+            if(nextNodesList == null) continue;
+
+            int nextNodesAmount = nextNodesList.size();
+
+            if(nextNodesAmount > maxGraphWidth) {
+                maxGraphWidth = nextNodesAmount;
+            }
+        }
+
+        return maxGraphWidth;
+    }
+
+    //to remove
+//    public int getMaxSubGraphWidth(List<DekstraNode> subGraph) {
+//        if(subGraph == null) return 0;
+//        if(subGraph.isEmpty()) return 0;
+//
+//        //In the beginning "maxGraphWidth" equals 1 because "nodes"(graph) is not empty. Therefore, if even there will be only one node in the graph, graph width is gonna be 1
+//        int maxSubGraphWidth = 1;
+//
+//        for (DekstraNode node : subGraph){
+//            List nextNodesList = node.getNextNodes();
+//
+//            if(nextNodesList == null) continue;
+//
+//            int nextNodesAmount = nextNodesList.size();
+//
+//            if(nextNodesAmount > maxSubGraphWidth) {
+//                maxSubGraphWidth = nextNodesAmount;
+//            }
+//        }
+//
+//        return maxSubGraphWidth;
+//    }
 
     @Override
     public String toString()

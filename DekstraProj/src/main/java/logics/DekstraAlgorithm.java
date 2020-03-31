@@ -2,8 +2,8 @@ package logics;
 
 import constants.AlertCommands;
 import constants.Constants;
-import functions.Timer;
-import functions.UsefulFunction;
+import commonUsefulFunctions.Timer;
+import commonUsefulFunctions.UsefulFunction;
 import objects.DekstraNode;
 import objects.Graph;
 
@@ -114,7 +114,6 @@ public class DekstraAlgorithm
             List<Integer> nextNodes = minWeightNode.getNextNodes();
 
             //if "minWeightNode" doesn't have next nodes
-
             boolean goOutFromLoop = false;
             while (nextNodes == null || nextNodes.isEmpty()) {
                 minWeightNode = getMinWeightNodeExcept(minWeightNode);
@@ -153,10 +152,17 @@ public class DekstraAlgorithm
         //check for "targetNode" has not been achieved
         if (targetNode.getBestWeight() >= Constants.INF) return AlertCommands.WARNING_RESULT;
 
-        List<DekstraNode> subList = setSubListWithDefaultNodesFromRootToTargetNodes(rootNode, targetNode);
-        subList = setSubListWithAllNodesFromRootToTargetNodes(rootNode, targetNode, subList);
+        //region subGraph forming
+        List<DekstraNode> subGraph = new ArrayList<>();
+        subGraph.add(rootNode);
+        subGraph.add(targetNode);
+        fillUpSubGraphFromRootToTargetNode(rootNode, targetNode, subGraph);
+        //endregion
+
+        //region get general back path in subGraph
         rootNode.setBackPathIndex(1);
-        amountAllBackPaths = getAmountBackPaths(subList, rootNode, targetNode);//set global variable amo amountAllBackPaths
+        amountAllBackPaths = getAmountBackPaths(subGraph, rootNode, targetNode);//set global variable "amountAllBackPaths"
+        //endregion
 
         //time counter function
         pinpoint_time(targetNode);
@@ -164,145 +170,26 @@ public class DekstraAlgorithm
         System.out.println("\namount back paths = " + amountAllBackPaths);
 
         UsefulFunction.printMap(map);
+        System.out.println("max graph width = " + graph.getMaxGraphWidth());
 //        DekstraBackPathsFinderThread_2_TEST.printMap();
         //DekstraBackPathsFinderThread_2.printMap();
 
         return AlertCommands.RIGHTS_RESULT;
     }
 
-    private List<DekstraNode> setSubListWithDefaultNodesFromRootToTargetNodes(DekstraNode rootNode, DekstraNode targetNode)
+    private void fillUpSubGraphFromRootToTargetNode(DekstraNode rootNode, DekstraNode targetOrParentNode, List<DekstraNode> subGraph)
     {
-        List<DekstraNode> subList = new CopyOnWriteArrayList<>();
+        for (Integer parentNumber : targetOrParentNode.getParents()){
+            DekstraNode parentNode = Graph.getNodeByNumber(parentNumber);
 
-        //add rootNode & nextNodes of rootNode
-        subList.add(rootNode);
+            if(parentNode.equals(rootNode) || subGraph.contains(parentNode)) continue;
 
-        for (Integer nextNodeNumber : rootNode.getNextNodes()) {
-            DekstraNode nexNode = Graph.getNodeByNumber(nextNodeNumber);
-            subList.add(nexNode);
+            subGraph.add(parentNode);
+            fillUpSubGraphFromRootToTargetNode(rootNode, parentNode, subGraph);
         }
-
-        //add targetNode & parentNodes of targetNode
-        subList.add(targetNode);
-
-        for (Integer parentNodeNumber : targetNode.getParents()) {
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-            if (!subList.contains(parentNode)) {
-                subList.add(parentNode);
-            }
-        }
-
-        return subList;
     }
 
-    private List<DekstraNode> setSubListWithAllNodesFromRootToTargetNodes(DekstraNode rootNode, DekstraNode targetNode, List<DekstraNode> subList)
-    {
-        for (DekstraNode node : subList) {
-            //parents
-            List<Integer> parentNodesNumbers = node.getParents();
-            if (parentNodesNumbers != null && !parentNodesNumbers.isEmpty()) {
-                checkAndAddUnusedParentOrNextNodesNodesIntoSubList(parentNodesNumbers, subList);
-            }
-            //next nodes
-            List<Integer> nextNodesNumbers = node.getNextNodes();
-            if (nextNodesNumbers != null && !nextNodesNumbers.isEmpty() && !parentsContainTargetNodeAsNextNodeFor(node, targetNode) && !nextNodesContainTargetNodeAsParentFor(node,
-                                                                                                                                                                              targetNode)) {
-                checkAndAddUnusedParentOrNextNodesNodesIntoSubList(nextNodesNumbers, subList);
-            }
-        }
-
-        //check for unused nodes from nextNodes & parentNodes
-        if (subListHasFullUnusedNodesWithParentOrNextNodes(rootNode, targetNode, subList)) {
-            setSubListWithAllNodesFromRootToTargetNodes(rootNode, targetNode, subList);
-        }
-
-        return subList;
-    }
-
-    private boolean subListHasFullUnusedNodesWithParentOrNextNodes(DekstraNode rootNode, DekstraNode targetNode, List<DekstraNode> subList)
-    {
-        //convert subList<DekstraNode> to subList<Integer>
-        List<Integer> subListInt = new CopyOnWriteArrayList<>();
-        for (DekstraNode node : subList) {
-            subListInt.add(node.getNumber());
-        }
-
-        for (DekstraNode node : subList) {
-            //parents
-            List<Integer> parentsNodeNumbers = node.getParents();
-            //if node has unused parents
-            if (parentsNodeNumbers != null && !parentsNodeNumbers.isEmpty()) {
-                if (!UsefulFunction.listContainsAllElements(subListInt, parentsNodeNumbers)) {
-                    return true;
-                }
-            }
-
-            //next nodes
-            List<Integer> nextNodeNumbers = node.getNextNodes();
-            //if node has unused next nodes
-            if (nextNodeNumbers != null && !nextNodeNumbers.isEmpty() && !parentsContainTargetNodeAsNextNodeFor(node, targetNode) && !nextNodesContainTargetNodeAsParentFor(node,
-                                                                                                                                                                            targetNode)) {
-                if (!UsefulFunction.listContainsAllElements(subListInt, nextNodeNumbers)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private boolean parentsContainTargetNodeAsNextNodeFor(DekstraNode node, DekstraNode targetNode)
-    {
-        for (Integer parentNodeNumber : node.getParents()) {
-
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-            for (Integer nextNodeNumber : parentNode.getNextNodes()) {
-
-                DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
-
-                if (nextNode.equals(targetNode)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private boolean nextNodesContainTargetNodeAsParentFor(DekstraNode node, DekstraNode targetNode)
-    {
-        for (Integer nextNodeNumber : node.getNextNodes()) {
-
-            DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
-            for (Integer parentNodeNumber : nextNode.getParents()) {
-
-                DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
-                if (parentNode.equals(targetNode)) {
-                    return true;
-                }
-            }
-        }
-
-        return false;
-    }
-
-    private void checkAndAddUnusedParentOrNextNodesNodesIntoSubList(List<Integer> listWithElements, List<DekstraNode> subList)
-    {
-        List<DekstraNode> listToAdd = new ArrayList<>();
-
-        //convert list<Integer> to list<DekstraNode>
-        for (Integer nextNodeNumber : listWithElements) {
-            DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
-            if (!subList.contains(nextNode)) {
-                listToAdd.add(nextNode);
-            }
-        }
-
-        //Filling up
-        UsefulFunction.fillUpListByCollection(subList, listToAdd);
-    }
-
-    private int getAmountBackPaths(List<DekstraNode> subList, DekstraNode rootNode, DekstraNode targetNode)
+    private int getAmountBackPaths(List<DekstraNode> subGraph, DekstraNode rootNode, DekstraNode targetNode)
     {
         boolean listNodesWithAddedBPIWasChanged = false;
 
@@ -326,12 +213,12 @@ public class DekstraAlgorithm
         }
 
         //loop checking for unfilled BackPathIndex of nodes [rootNode = lastNodeWithAddedBackPathIndex]
-        for (DekstraNode nextNode : subList) {
+        for (DekstraNode nextNode : subGraph) {
             if (nextNode.getBackPathIndex() == 0) {
                 DekstraNode lastNodeWithSetBPI = getRandomNodeWithBPI(listNodesWithAddedBPI, listNotToUseNodesWithAddedBPI);
                 UsefulFunction.printList(listNodesWithAddedBPI);
                 System.out.println("lastNodeWithSetBPI = " + lastNodeWithSetBPI);
-                return getAmountBackPaths(subList, lastNodeWithSetBPI, targetNode);
+                return getAmountBackPaths(subGraph, lastNodeWithSetBPI, targetNode);
             }
         }
 
@@ -577,39 +464,6 @@ public class DekstraAlgorithm
         }
 
         return null;
-    }
-
-    private void getAllBackPaths(DekstraNode node, int amountAllBackPaths)
-    {
-        int backPathIndex = 0;
-
-        UsefulFunction.fillUpMapForManyParents(map, backPathIndex, node.getNumber(), amountAllBackPaths);
-
-        for (Integer parentNumber : node.getParents()) {
-            DekstraNode currentNode = graph.getNodeByNumber(parentNumber);
-
-            while (currentNode != null) {
-
-                if (currentNode.getParents().size() > 1) {
-                    UsefulFunction.fillUpMapForManyParents(map, backPathIndex, currentNode.getNumber(), amountAllBackPaths);
-                    for (Integer innerParentNumber : currentNode.getParents()) {
-                        //processing inner parent numbers (i don't know how to do)
-                    }
-                }
-                else {
-                    UsefulFunction.fillUpMap(map, backPathIndex, currentNode.getNumber());
-                }
-
-                if (currentNode.getParents().isEmpty()) {
-                    backPathIndex++;
-                    currentNode = null;
-                }
-                else {
-                    currentNode = graph.getNodeByNumber(currentNode.getParents().get(0));
-                }
-            }
-        }
-
     }
 
 //    private void getAllBackPaths_multiThreads_TEST(DekstraNode node) throws ExecutionException, InterruptedException

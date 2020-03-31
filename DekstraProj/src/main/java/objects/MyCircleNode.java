@@ -1,10 +1,8 @@
 package objects;
 
 import constants.Constants;
-import functions.UsefulFunction;
-import javafx.event.EventHandler;
+import commonUsefulFunctions.UsefulFunction;
 import javafx.scene.Cursor;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
