@@ -11,22 +11,19 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
-public class FileExecutorForMatrixAdjacency
+public class TXTFileExecutorForMatrixAdjacency implements IFileExecutor
 {
     private File file = null;
 
-    public FileExecutorForMatrixAdjacency() {}
+    public TXTFileExecutorForMatrixAdjacency() {}
 
-    public FileExecutorForMatrixAdjacency(File file)
+    public TXTFileExecutorForMatrixAdjacency(File file)
     {
         this.file = file;
     }
 
-    public AlertCommands fillUp(Graph graph) throws IOException
+    public AlertCommands fillUp(Graph graph)
     {
-        //before every reading from file need to clear graph
-        graph.Nodes().clear();
-
         List<String> stringList = getContent();
 
         if(stringList.isEmpty() || stringList.size() == 0) {

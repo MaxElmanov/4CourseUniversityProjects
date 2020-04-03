@@ -66,5 +66,6 @@ public class Constants
     public static final String NODE_NUMBER = "Node_Number_ID_";
     public static final String TEMP_YELLOW_NODE_ID = "Temp_Yellow_Node_ID";
     public static final String GENERATE_RANDOM_GRAPH_BUTTON_ID = "Generate_Random_Button_ID";
+    public static final String RETURN_PREVIOUS_STAGE = "Return_Previous_Stage_ID";
 
 }

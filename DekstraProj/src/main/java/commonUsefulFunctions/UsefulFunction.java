@@ -19,6 +19,9 @@ public class UsefulFunction
         catch (Exception e) {
             e.printStackTrace();
         }
+        finally {
+            System.exit(-1);
+        }
     }
 
     /**
@@ -304,5 +307,16 @@ public class UsefulFunction
             gridNodesList.add(savedNode);
         }
         //endregion
+    }
+
+    public static List<String> getStringListInsteadOfStringBuilderList(List<StringBuilder> stringBuilderList)
+    {
+        List<String> stringList = new ArrayList<>();
+
+        for (StringBuilder sb : stringBuilderList){
+            stringList.add(sb.toString());
+        }
+
+        return stringList;
     }
 }
