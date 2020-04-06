@@ -59,9 +59,10 @@ public class TXTFileExecutorForMatrixAdjacency implements IFileExecutor
 
                 for (int j = 0; j < splittedString.length; j++) {
                     int nextNodeWeight = Integer.parseInt(splittedString[j]);
+                    int nextNodeNumber = j + 1;
 
                     if (nextNodeWeight > 0) {
-                        nextNodes.add(j + 1);
+                        nextNodes.add(nextNodeNumber);
                         nextNodesWeights.add(nextNodeWeight);
                     }
                 }
@@ -96,13 +97,13 @@ public class TXTFileExecutorForMatrixAdjacency implements IFileExecutor
             }
         }
         catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
+            return null;
         }
         catch (FileNotFoundException e) {
-            e.printStackTrace();
+            return null;
         }
         catch (IOException e) {
-            e.printStackTrace();
+            return null;
         }
 
         return stringList;

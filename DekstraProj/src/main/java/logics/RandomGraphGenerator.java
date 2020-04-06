@@ -40,8 +40,8 @@ public class RandomGraphGenerator
             return AlertCommands.ERROR_RESULT;
         }
 
-        //max "edgesAmount" may equals "nodesAmount^2". Right [edgesAmount <= nodesAmount^2]
-        if(edgesAmount > Math.pow(nodesAmount, 2)){
+        //max "edgesAmount" may equals "[nodesAmount * (nodesAmount - 1) + nodesAmount(loops)]". Right edgesAmount <= [nodesAmount * (nodesAmount - 1) + nodesAmount(loops)]
+        if(edgesAmount > (nodesAmount*(nodesAmount - 1) + nodesAmount)){
             return AlertCommands.ERROR_RESULT;
         }
 
@@ -51,6 +51,7 @@ public class RandomGraphGenerator
             //region Next nodes numbers generation
             List<Integer> nextNodesNumbers = new ArrayList<>();
             int nextNodeAmount = getRandomNextNodesAmount(i);
+
             for (int j = 0; j < nextNodeAmount; j++) {
                 //"nextNode" getting (it can be "nodeNumber" itself)
                 int randomNextNodeNumber = getRandomNodeNumber();
@@ -83,10 +84,10 @@ public class RandomGraphGenerator
         return randomWeight;
     }
 
-    private Integer getRandomNextNodesAmount(int loopInterator)
+    private Integer getRandomNextNodesAmount(int loopIterator)
     {
         //last node must contains all remaining edges to use all entered edges
-        if((loopInterator + 1) == nodesAmount) {
+        if((loopIterator + 1) == nodesAmount) {
             return remainedEdgesAmount;
         }
 
