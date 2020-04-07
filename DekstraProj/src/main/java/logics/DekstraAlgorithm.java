@@ -80,32 +80,23 @@ public class DekstraAlgorithm
         for (DekstraNode node : graph.Nodes()) {
             if (node.getNumber() == startPoint) {
                 node.setBestWeight(0);
-                continue;
             }
-            node.setBestWeight(Constants.INF);
+            else
+            {
+                node.setBestWeight(Constants.INF);
+            }
         }
     }
 
-    private boolean areThereNodesWhichNotToBeUsedInForwardAlgthm()
-    {
-        for (DekstraNode node : graph.Nodes()) {
-            if (node.wasUsedInForwardAlthm() == false) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    public AlertCommands DO(int inStartPoint, int inEndPoint) throws ExecutionException, InterruptedException
+    public AlertCommands DO(int inputStartPoint, int inputEndPoint) throws ExecutionException, InterruptedException
     {
         map.clear();
-        init(inStartPoint, inEndPoint);
+        init(inputStartPoint, inputEndPoint);
 
-        executeDesktraAlgorithm();
+        executeDekstraAlgorithm();
 
-        DekstraNode rootNode = Graph.getNodeByNumber(inStartPoint);
-        DekstraNode targetNode = Graph.getNodeByNumber(inEndPoint);
+        DekstraNode rootNode = Graph.getNodeByNumber(inputStartPoint);
+        DekstraNode targetNode = Graph.getNodeByNumber(inputEndPoint);
 
         //check for "rootNode" and "targetNode" identity
         if (rootNode.equals(targetNode)) return AlertCommands.RIGHTS_RESULT;
@@ -138,7 +129,7 @@ public class DekstraAlgorithm
         return AlertCommands.RIGHTS_RESULT;
     }
 
-    private void executeDesktraAlgorithm()
+    private void executeDekstraAlgorithm()
     {
         while (true) {
             DekstraNode minWeightNode = getMinWeightNodeExcept(null);
@@ -153,12 +144,13 @@ public class DekstraAlgorithm
 
             //if "minWeightNode" doesn't have next nodes
             boolean goOutFromLoop = false;
-            while (nextNodes == null || nextNodes.isEmpty()) {
+            //was while but it seemed to me that if will be enough
+            if (nextNodes == null || nextNodes.isEmpty()) {
                 minWeightNode = getMinWeightNodeExcept(minWeightNode);
 
                 if(minWeightNode == null) {
                     goOutFromLoop = true;
-                    break;
+                    //break;
                 }
 
                 nextNodes = minWeightNode.getNextNodes();
@@ -180,6 +172,50 @@ public class DekstraAlgorithm
                 }
             }
         }
+    }
+
+    private boolean areThereNodesWhichNotToBeUsedInForwardAlgthm()
+    {
+        for (DekstraNode node : graph.Nodes()) {
+            if (node.wasUsedInForwardAlthm() == false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private DekstraNode getMinWeightNodeExcept(DekstraNode exceptNode)
+    {
+        List<DekstraNode> graphNodes = graph.Nodes();
+        DekstraNode nodeWithMinWeight = null;
+
+        //1 loop - locking for minimal weight node which was not used in forward algorithm
+        for (DekstraNode node : graphNodes)
+        {
+            if (!node.wasUsedInForwardAlthm())
+            {
+                if (exceptNode != null && node.equals(exceptNode))
+                {
+                    continue;
+                }
+
+                nodeWithMinWeight = node;
+                break;
+            }
+        }
+
+        if(nodeWithMinWeight != null) {
+            for (DekstraNode insideNode : graphNodes) {
+                if (!insideNode.wasUsedInForwardAlthm() && insideNode.getBestWeight() < nodeWithMinWeight.getBestWeight()) {
+                    nodeWithMinWeight = insideNode;
+                }
+            }
+
+            nodeWithMinWeight.setWasUsedInForwardAlthm(true);
+        }
+
+        return nodeWithMinWeight;
     }
 
     private void fillUpSubGraphFromRootToTargetNode(DekstraNode rootNode, DekstraNode targetOrParentNode, List<DekstraNode> subGraph)
@@ -268,37 +304,6 @@ public class DekstraAlgorithm
         }
 
         return node;
-    }
-
-    private DekstraNode getMinWeightNodeExcept(DekstraNode exceptNode)
-    {
-        List<DekstraNode> graphNodes = graph.Nodes();
-        DekstraNode minWeightNode = null;
-
-        //1 loop - locking for minimal weight node which was not used in forward algorithm
-        for (DekstraNode node : graphNodes) {
-            if (!node.wasUsedInForwardAlthm()) {
-                if(exceptNode != null && node.equals(exceptNode)) {
-                    continue;
-                }
-
-                minWeightNode = node;
-
-                for (DekstraNode insideNode : graphNodes) {
-                    if (!insideNode.wasUsedInForwardAlthm() && insideNode.getBestWeight() < minWeightNode.getBestWeight()) {
-                        minWeightNode = insideNode;
-                    }
-                }
-
-                break;
-            }
-        }
-
-        if(minWeightNode != null) {
-            minWeightNode.setWasUsedInForwardAlthm(true);
-        }
-
-        return minWeightNode;
     }
 
     private void pinpoint_time(DekstraNode endNode) throws ExecutionException, InterruptedException

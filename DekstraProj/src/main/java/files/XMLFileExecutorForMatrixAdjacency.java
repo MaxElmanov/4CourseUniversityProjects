@@ -53,7 +53,7 @@ public class XMLFileExecutorForMatrixAdjacency implements IFileExecutor
                 if (!isElementValid(node, "node", Node.ELEMENT_NODE)) continue;
 
 
-                //region Node veraibles
+                //region Node variables
                 // /graph/node/@number
                 int nodeNumber = Integer.parseInt(node.getAttributes().item(0).getNodeValue());
                 List<Integer> nextNodesNumbers = new CopyOnWriteArrayList<>();
