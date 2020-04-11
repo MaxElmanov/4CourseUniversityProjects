@@ -19,7 +19,7 @@ public class DekstraAlgorithm
 
     //finding all back paths by 1 thread
     private static Map<Integer, List<Integer>> map;
-    private static List<DekstraBackPathsFinderThread_2> threads;
+    private static List<DekstraBackPathsFinderThread_2_TEST> threads;
     private static List<Integer> listOfUsedPathNumbers;
 
     private List<Integer> paths;
@@ -257,8 +257,8 @@ public class DekstraAlgorithm
         for (DekstraNode nextNode : subGraph) {
             if (nextNode.getBackPathIndex() == 0) {
                 DekstraNode lastNodeWithSetBPI = getRandomNodeWithBPI(listNodesWithAddedBPI, listNotToUseNodesWithAddedBPI);
-                UsefulFunction.printList(listNodesWithAddedBPI);
-                System.out.println("lastNodeWithSetBPI = " + lastNodeWithSetBPI);
+                //UsefulFunction.printList(listNodesWithAddedBPI);
+                //System.out.println("lastNodeWithSetBPI = " + lastNodeWithSetBPI);
                 return getAmountBackPaths(subGraph, lastNodeWithSetBPI, targetNode);
             }
         }
@@ -292,7 +292,7 @@ public class DekstraAlgorithm
         for (Integer parentNodeNumber : node.getParents()) {
             DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
             if (parentNode.getBackPathIndex() == 0) {
-                parentNode.setZeroBackPathIndex();//on the off-chance
+                //parentNode.setZeroBackPathIndex();//on the off-chance
                 return null;
             }
         }
@@ -501,28 +501,28 @@ public class DekstraAlgorithm
 
     private void getAllBackPaths_multiThreads(DekstraNode node) throws ExecutionException, InterruptedException
     {
-        DekstraBackPathsFinderThread_2.setGraph(graph);
-        //DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
+        //DekstraBackPathsFinderThread_2.setGraph(graph);
+        DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
 
-        DekstraBackPathsFinderThread_2.setAmountAllBackPaths(amountAllBackPaths);
-        //DekstraBackPathsFinderThread_2_TEST.setAmountAllBackPaths(amountAllBackPaths);
+        //DekstraBackPathsFinderThread_2.setAmountAllBackPaths(amountAllBackPaths);
+        DekstraBackPathsFinderThread_2_TEST.setAmountAllBackPaths(amountAllBackPaths);
 
         UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
         //DekstraBackPathsFinderThread_2.setMap(map);
 
-        DekstraBackPathsFinderThread_2.setTargetNode(node);
-        //DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
+        //DekstraBackPathsFinderThread_2.setTargetNode(node);
+        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
 
         DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
-        DekstraBackPathsFinderThread_2.setRootNode(rootNode);
-        //DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
+        //DekstraBackPathsFinderThread_2.setRootNode(rootNode);
+        DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
 
-        DekstraBackPathsFinderThread_2.setThreads(threads);
-        //DekstraBackPathsFinderThread_2_TEST.setThreads(threads);
+        //DekstraBackPathsFinderThread_2.setThreads(threads);
+        DekstraBackPathsFinderThread_2_TEST.setThreads(threads);
 
         //DekstraBackPathsFinderThread_2_TEST.setListOfUsedPathNumbers(listOfUsedPathNumbers);
 
-        service = Executors.newFixedThreadPool(node.getParents().size());
+        service = Executors.newFixedThreadPool(graph.getMaxGraphWidth());
 
         node.setInThread(true);
 
@@ -538,12 +538,12 @@ public class DekstraAlgorithm
             listOfUsedPathNumbers.add(pathNumber);
             //----------------------------------
 
-            threads.add(new DekstraBackPathsFinderThread_2(pathNumber, parentNode));
-            new DekstraBackPathsFinderThread_2_TEST(pathNumber, parentNode).CALL();
+            threads.add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, parentNode));
+            //new DekstraBackPathsFinderThread_2_TEST(pathNumber, parentNode).CALL();
         }
 
         try {
-            for (DekstraBackPathsFinderThread_2 thread : threads) {
+            for (DekstraBackPathsFinderThread_2_TEST thread : threads) {
                 futures.add(service.submit(thread));
             }
             for (Future<Integer> future : futures) {

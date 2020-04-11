@@ -4,7 +4,6 @@ import constants.AlertCommands;
 import constants.Constants;
 import files.FileExecutorForMatrixAdjacencyFactory;
 import files.IFileExecutor;
-import files.TXTFileExecutorForMatrixAdjacency;
 import commonUsefulFunctions.UsefulFunction;
 import javafx.application.Application;
 import javafx.collections.FXCollections;

@@ -1,3 +1,4 @@
+/*
 package logics;
 
 import commonUsefulFunctions.UsefulFunction;
@@ -40,10 +41,10 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         this.readyListOfMap = readyListOfMap;
     }
 
-    public DekstraBackPathsFinderThread_2(Integer pathNumber, DekstraNode nextNode)
+    public DekstraBackPathsFinderThread_2(Integer pathNumber, DekstraNode node)
     {
         this.pathNumber = pathNumber;
-        this.node = nextNode;
+        this.node = node;
         this.nodesCheckers = new ConcurrentHashMap<>();
         service = Executors.newFixedThreadPool(amountAllBackPaths);
     }
@@ -54,9 +55,9 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         synchronized (graph) {
             System.out.println(Thread.currentThread().getName());
 
-//            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
-//            if(pathNumber == null) return pathNumber;
-//            listOfUsedPathNumbers.add(pathNumber);
+            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
+            if(pathNumber == null) return pathNumber;
+            listOfUsedPathNumbers.add(pathNumber);
 
             if (readyListOfMap != null && !readyListOfMap.isEmpty()) {
                 UsefulFunction.fillUpMapByReverseList(map, pathNumber, readyListOfMap);
@@ -320,4 +321,4 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
 // {
 // service.shutdown();
 // }
-}
+}*/
