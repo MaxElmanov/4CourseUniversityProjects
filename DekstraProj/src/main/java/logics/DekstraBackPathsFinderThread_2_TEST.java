@@ -31,10 +31,10 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
         map = new ConcurrentHashMap<>();
     }
 
-    public DekstraBackPathsFinderThread_2_TEST(Integer pathNumber, DekstraNode readyListOfMapStartNode, List<Integer> readyListOfMap, ConcurrentMap<Integer, List<Integer>> nodesCheckers)
+    public DekstraBackPathsFinderThread_2_TEST(Integer pathNumber, DekstraNode nextCurrentNode, List<Integer> readyListOfMap, ConcurrentMap<Integer, List<Integer>> nodesCheckers)
     {
         this.pathNumber = pathNumber;
-        this.currentNode = readyListOfMapStartNode;
+        this.currentNode = nextCurrentNode;
         this.nodesCheckers = nodesCheckers;
         this.readyListOfMap = readyListOfMap;
 
@@ -56,11 +56,11 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
     {
         synchronized (graph)
         {
-//            System.out.println(Thread.currentThread().getName());
-//
-//            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
-//            if (pathNumber == null) return pathNumber;
-//            listOfUsedPathNumbers.add(pathNumber);
+            System.out.println(Thread.currentThread().getName());
+
+            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
+            if (pathNumber == null) return pathNumber;
+            listOfUsedPathNumbers.add(pathNumber);
 
             if (readyListOfMap != null && !readyListOfMap.isEmpty())
             {
@@ -90,10 +90,10 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
             // [listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
             DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
 
-            DekstraNode readyListOfMapStartNode = getMeanNodeOfReadyListOfMap(nextNode, listOfMap);
-            List<Integer> readyListOfMap = getReadyListOfMap(readyListOfMapStartNode, listOfMap);
+            DekstraNode nextCurrentNode = getNextCurrentNodeOfReadyListOfMap(nextNode, listOfMap);
+            List<Integer> readyListOfMap = getReadyListOfMap(nextCurrentNode, listOfMap);
 
-            if (readyListOfMapStartNode != null)
+            if (nextCurrentNode != null)
             {
                 //generate new pathNumber
                 Integer pathNumber = UsefulFunction.generateNewPathNumberRangeFrom0To(amountAllBackPaths, listOfUsedPathNumbers);
@@ -101,8 +101,8 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
                 listOfUsedPathNumbers.add(pathNumber);
                 //-----------------------------------
 
-                threads.add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, readyListOfMapStartNode, readyListOfMap, nodesCheckers));
-                //new DekstraBackPathsFinderThread_2_TEST(pathNumber, readyListOfMapStartNode, readyListOfMap, nodesCheckers).start();
+                threads.add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
+                //new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers).start();
             }
         }
 
@@ -185,12 +185,9 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
         return null;
     }
 
-    private DekstraNode getMeanNodeOfReadyListOfMap(DekstraNode nextNode, List<Integer> listOfMap)
+    private DekstraNode getNextCurrentNodeOfReadyListOfMap(DekstraNode nextNode, List<Integer> listOfMap)
     {
-        if (nextNode == null)
-        {
-            return null;
-        }
+        if (nextNode == null) return null;
 
         List<Integer> parentNodes = nextNode.getParents();
 
@@ -201,7 +198,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
         else if (parentNodes.size() == 1)
         {
             DekstraNode newNextNode = getNextNodeWithManyParentsFrom(listOfMap, nextNode);
-            return getMeanNodeOfReadyListOfMap(newNextNode, listOfMap);
+            return getNextCurrentNodeOfReadyListOfMap(newNextNode, listOfMap);
         }
         else
         { //parentNodes.size() > 1
@@ -212,7 +209,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
                 if (newNextNode != null && !newNextNode.equals(targetNode))
                 {
                     clearAllNodeCheckersFor(nextNode);
-                    return getMeanNodeOfReadyListOfMap(newNextNode, listOfMap);
+                    return getNextCurrentNodeOfReadyListOfMap(newNextNode, listOfMap);
                 }
             }
             else

@@ -499,7 +499,7 @@ public class DekstraAlgorithm
 //        System.out.println("MultiThreads. Inside function spent time = " + Timer.stop());
 //    }
 
-    private void getAllBackPaths_multiThreads(DekstraNode node) throws ExecutionException, InterruptedException
+    private void getAllBackPaths_multiThreads(DekstraNode targetNode) throws ExecutionException, InterruptedException
     {
         //DekstraBackPathsFinderThread_2.setGraph(graph);
         DekstraBackPathsFinderThread_2_TEST.setGraph(graph);
@@ -507,11 +507,13 @@ public class DekstraAlgorithm
         //DekstraBackPathsFinderThread_2.setAmountAllBackPaths(amountAllBackPaths);
         DekstraBackPathsFinderThread_2_TEST.setAmountAllBackPaths(amountAllBackPaths);
 
-        UsefulFunction.fillUpMapForManyParents(map, 0, node.getNumber(), amountAllBackPaths); //first element is belong to every back path
+        UsefulFunction.fillUpMapForManyParents(map, 0, targetNode.getNumber(), amountAllBackPaths); //first element is belong to every back path
         //DekstraBackPathsFinderThread_2.setMap(map);
 
-        //DekstraBackPathsFinderThread_2.setTargetNode(node);
-        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
+        DekstraBackPathsFinderThread_2_TEST.setMap(map);
+
+        //DekstraBackPathsFinderThread_2.setTargetNode(targetNode);
+        DekstraBackPathsFinderThread_2_TEST.setTargetNode(targetNode);
 
         DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
         //DekstraBackPathsFinderThread_2.setRootNode(rootNode);
@@ -520,15 +522,17 @@ public class DekstraAlgorithm
         //DekstraBackPathsFinderThread_2.setThreads(threads);
         DekstraBackPathsFinderThread_2_TEST.setThreads(threads);
 
+        DekstraBackPathsFinderThread_2_TEST.setListOfUsedPathNumbers(listOfUsedPathNumbers);
+
         //DekstraBackPathsFinderThread_2_TEST.setListOfUsedPathNumbers(listOfUsedPathNumbers);
 
         service = Executors.newFixedThreadPool(graph.getMaxGraphWidth());
 
-        node.setInThread(true);
+        targetNode.setInThread(true);
 
         Timer.start();
 
-        for (Integer parentNodeNumber : node.getParents()) {
+        for (Integer parentNodeNumber : targetNode.getParents()) {
             DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
             //futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
 
