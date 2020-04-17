@@ -232,7 +232,7 @@ public class UsefulFunction
         return null;
     }
 
-    public static void fillUpListByReverseCollection(List<Integer> list, List<Integer> listToAdd)
+    public static void fillUpListByReverseList(List<Integer> list, List<Integer> listToAdd)
     {
         if (listToAdd == null || listToAdd.isEmpty()) return;
 
@@ -248,7 +248,7 @@ public class UsefulFunction
         }
     }
 
-    public static <T> void fillUpListByCollection(List<T> list, List<T> listToAdd)
+    public static <T> void fillUpListByList(List<T> list, List<T> listToAdd)
     {
         if (listToAdd == null || listToAdd.isEmpty()) return;
 

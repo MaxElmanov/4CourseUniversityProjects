@@ -73,7 +73,7 @@ public class GraphDrawer
 //            if(nextNodesNumbers == null || nextNodesNumbers.isEmpty()) continue;
 //
 //            for (Integer nextNodeNumber : nextNodesNumbers){
-//                DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+//                DekstraNode nextNode = graph.getNodeByNumber(nextNodeNumber);
 //
 //                gc.beginPath();
 //                gc.moveTo(node.getX() + Constants.EDGE_OFFSET_ON_CANVAS, node.getY() + Constants.EDGE_OFFSET_ON_CANVAS);
@@ -95,7 +95,7 @@ public class GraphDrawer
             if (nextNodesNumbers == null || nextNodesNumbers.isEmpty()) continue;
 
             for (int nextNodeIndex = 0; nextNodeIndex < nextNodesNumbers.size(); nextNodeIndex++) {
-                DekstraNode nextNode = Graph.getNodeByNumber(nextNodesNumbers.get(nextNodeIndex));
+                DekstraNode nextNode = graph.getNodeByNumber(nextNodesNumbers.get(nextNodeIndex));
 
                 double startX = startNode.getX();
                 double startY = startNode.getY();

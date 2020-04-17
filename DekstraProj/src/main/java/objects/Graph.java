@@ -1,13 +1,14 @@
 package objects;
 
 import commonUsefulFunctions.UsefulFunction;
+import constants.Constants;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Graph
+public class Graph implements Cloneable
 {
-    private static List<DekstraNode> nodes;
+    private List<DekstraNode> nodes;
 
     public Graph()
     {
@@ -17,6 +18,21 @@ public class Graph
     public Graph(List<DekstraNode> nodes)
     {
         this.nodes = nodes;
+    }
+
+    public Graph(Graph graph)
+    {
+        nodes = new ArrayList<>();
+        UsefulFunction.fillUpListByList(nodes, graph.nodes);
+        nodes.stream().forEach(node -> {
+            node.getParents().clear();
+            node.setBestWeight(Constants.INF);
+            node.setWasUsedInForwardAlthm(false);
+            node.setWasUsedInBackPathsFrom(false);
+            node.setInThread(false);
+            node.getParentsCorrespondingCheckers().clear();
+            node.setBackPathIndex(0);
+        });
     }
 
     public List<DekstraNode> Nodes()
@@ -29,7 +45,7 @@ public class Graph
         nodes.add(node);
     }
 
-    public static DekstraNode getNodeByNumber(Integer number)
+    public DekstraNode getNodeByNumber(Integer number)
     {
         for (DekstraNode node : nodes) {
             if (node.getNumber() == number) {
@@ -77,5 +93,19 @@ public class Graph
         }
 
         return builder.toString();
+    }
+
+    @Override
+    public Graph clone() throws CloneNotSupportedException
+    {
+        if (this != null)
+        {
+            if (this instanceof Graph)
+            {
+                return new Graph(this);
+            }
+        }
+
+        return null;
     }
 }

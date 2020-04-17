@@ -104,7 +104,7 @@ public class MyCircleNode extends Circle
                 this.setCenterX(event.getX());
                 this.setCenterY(event.getY());
 
-                DekstraNode node = Graph.getNodeByNumber(this.number);
+                DekstraNode node = graph.getNodeByNumber(this.number);
                 node.setX(this.getCenterX());
                 node.setY(this.getCenterY());
 

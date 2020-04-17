@@ -40,6 +40,8 @@ import java.util.concurrent.ExecutionException;
 public class Launcher extends Application
 {
     private static Graph graph = new Graph();
+    //graph to save main graph to return a previous stage
+    private static Graph tempGraph = null;
 
     //UI variables
     private GridPane grid;
@@ -72,7 +74,7 @@ public class Launcher extends Application
 //        graph.add(new DekstraNode(new Node(13,  null,   null)));
 //        graph.add(new DekstraNode(new Node(14,  Arrays.asList(13),   Arrays.asList(3))));
 //        graph.add(new DekstraNode(new Node(15,  Arrays.asList(13),   Arrays.asList(3))));
-       Application.launch();
+        Application.launch();
 
     }
 
@@ -128,13 +130,13 @@ public class Launcher extends Application
 
             //region FileChooser
             final FileChooser fileChooser = new FileChooser();
-            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("TXT", "*.txt"),
-                                                     new FileChooser.ExtensionFilter("XML", "*.xml"));
+            fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("TXT", "*.txt"), new FileChooser.ExtensionFilter("XML", "*.xml"));
             //endregion
 
             uploadFile = fileChooser.showOpenDialog(primaryStage);
-            if (uploadFile != null) {
-                getCanvasObjectsWithBeforeRunStageIDs();
+            if (uploadFile != null)
+            {
+                getUploadOrGenerationGraphStageCanvasObjects();
             }
         }));
         //endregion
@@ -146,7 +148,7 @@ public class Launcher extends Application
             setUpManuallyFlag = true;
             uploadFileFlag = false;
             runButtonAndSpinnersDisableFlag = true;
-            getCanvasObjectsWithBeforeRunStageIDs();
+            getUploadOrGenerationGraphStageCanvasObjects();
         });
         //endregion
 
@@ -165,7 +167,7 @@ public class Launcher extends Application
         return_previous_stage.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/return_previous_stage.png"))));
         return_previous_stage.setOnAction((e) -> {
             runButtonAndSpinnersDisableFlag = false;
-            getCanvasObjectsWithBeforeRunStageIDs();
+            getUploadOrGenerationGraphStageCanvasObjects();
         });
         //endregion
 
@@ -201,67 +203,106 @@ public class Launcher extends Application
         return grid;
     }
 
-    private void getCanvasObjectsWithBeforeRunStageIDs(){
-        //region prohibit user to return to stage when he can choose between operations such as "upload file" and "set up manually"
-        returnPreviousStageMI_DisableFlag = true;
-        MenuItem reset_find_short_path_operation = (MenuItem) getObjectFromUIListByID(menuBar, Constants.RETURN_PREVIOUS_STAGE);
-        reset_find_short_path_operation.setDisable(returnPreviousStageMI_DisableFlag);
-        //endregion
+    private void getUploadOrGenerationGraphStageCanvasObjects()
+    {
+        if (uploadFileFlag)
+        {
+            //it means that user has already upload file, get short back paths(SBP). Then he decided to return to a previous stage to change start and end point.
+            if (returnPreviousStageMI_DisableFlag == false){
+                //region Return previous stage event
 
-        if(uploadFileFlag) {
-            //region Upload a graph from file
+                //region Before upload execution Cleaning
+                clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID);
+                clearRootAndTarget_labels_spinners();
+                //endregion
 
-            //region Before upload execution Cleaning
-            clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID);
-            clearRootAndTarget_labels_spinners();
-            clearGraphNodes();
-            clearCanvasObjects();
-            clearCircles();
+                //region Save tempGraph to graph (restore after deletion). it need to use this variable to return a previous stage after "Run" button execution
+                try
+                {
+                    graph = tempGraph.clone();
+                }
+                catch (CloneNotSupportedException e)
+                {
+                    e.printStackTrace();
+                }
+                //endregion
 
-            //endregion
+                getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
+                Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
 
-            //filling up graph from uploadFile
-            FileExecutorForMatrixAdjacencyFactory factory = new FileExecutorForMatrixAdjacencyFactory();
-            IFileExecutor fileExecutor = factory.getFileExecutor(uploadFile);
+                //region Visibility setup for run stage objects
+                runButton.setVisible(true);
+                //endregion
 
-            AlertCommands alertCommand = null;
-            alertCommand = fileExecutor.fillUp(graph);
-
-            //region alertMap for File reading
-            Map<AlertCommands, String> alertMap = new HashMap<>();
-            alertMap.put(alertCommand.RIGHTS_RESULT, "File was successfully read.");
-            alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. Check for it.");
-            alertMap.put(alertCommand.ERROR_RESULT, "You uploaded an empty or invalid file. Check out for it.");
-            //endregion
-            boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
-            if(!continueExecution) {
-                clearWorkingAreaExceptIDs(Constants.MENU_ID);
-                return;
+                grid.add(runButton, 1, 3, 1, 1);
+                //endregion
             }
+            else{
+                //region Upload a graph from file
 
-            getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
-            Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+                //region Before upload execution Cleaning
+                clearWorkingAreaExceptIDs(Constants.MENU_ID, Constants.CANVAS_ID);
+                clearRootAndTarget_labels_spinners();
+                clearGraphNodes();
+                clearCanvasObjects();
+                clearCircles();
+                //endregion
 
-            //region Visibility setup for run stage objects
-            runButton.setVisible(true);
-//            for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
-//                spinner.setVisible(true);
-//            }
-//            for (Label label : rootAndTargetNode_labels_forRunStage){
-//                label.setVisible(true);
-//            }
-            //endregion
+                //filling up graph from uploadFile
+                FileExecutorForMatrixAdjacencyFactory factory = new FileExecutorForMatrixAdjacencyFactory();
+                IFileExecutor fileExecutor = factory.getFileExecutor(uploadFile);
 
-            grid.add(runButton, 1, 3, 1, 1);
+                AlertCommands alertCommand = fileExecutor.fillUp(graph);
 
-            canvas = addCanvas(runButton);
-            grid.add(canvas, 2, 1, 8, 9);
+                //region Save graph to tempGraph. it need to use this variable to return a previous stage after "Run" button execution
+                try
+                {
+                    tempGraph = graph.clone();
+                }
+                catch (CloneNotSupportedException e)
+                {
+                    e.printStackTrace();
+                }
+                //endregion
 
-            //inform user to start landing nodes
-            createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
-            //endregion
+                //region alertMap for File reading
+                Map<AlertCommands, String> alertMap = new HashMap<>();
+                alertMap.put(alertCommand.RIGHTS_RESULT, "File was successfully read.");
+                alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. Check for it.");
+                alertMap.put(alertCommand.ERROR_RESULT, "You uploaded an empty or invalid file. Check out for it.");
+                //endregion
+                boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
+                if (!continueExecution)
+                {
+                    clearWorkingAreaExceptIDs(Constants.MENU_ID);
+                    return;
+                }
+
+                getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
+                Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+
+                //region Visibility setup for run stage objects
+                runButton.setVisible(true);
+    //            for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
+    //                spinner.setVisible(true);
+    //            }
+    //            for (Label label : rootAndTargetNode_labels_forRunStage){
+    //                label.setVisible(true);
+    //            }
+                //endregion
+
+                grid.add(runButton, 1, 3, 1, 1);
+
+                canvas = addCanvas(runButton);
+                grid.add(canvas, 2, 1, 8, 9);
+
+                //inform user to start landing nodes
+                createAlert(Alert.AlertType.INFORMATION, "Information", "Please, land all nodes on the area with grey borders.");
+                //endregion
+            }
         }
-        else if (setUpManuallyFlag) {
+        else if (setUpManuallyFlag)
+        {
             //region Get up a graph manually
 
             //region Cleaning working area except menuBar
@@ -305,7 +346,7 @@ public class Launcher extends Application
             generateRandomGraph_btn.setOnAction((e_2) -> {
                 //region allow user to return to stage when he can choose between operations such as "upload file" and "set up manually"
                 returnPreviousStageMI_DisableFlag = false;
-                //reset_find_short_path_operation (MenuItem)
+                //return_previous_stage (MenuItem)
                 ((MenuItem) getObjectFromUIListByID(menuBar, Constants.RETURN_PREVIOUS_STAGE)).setDisable(returnPreviousStageMI_DisableFlag);
                 //endregion
 
@@ -322,7 +363,8 @@ public class Launcher extends Application
                 alertMap.put(alertCommand.ERROR_RESULT, "Random graph can not be build. Check for entered parameters.");
 
                 boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
-                if(!continueExecution) {
+                if (!continueExecution)
+                {
                     runButtonAndSpinnersDisableFlag = false;
                     return;
                 }
@@ -372,26 +414,37 @@ public class Launcher extends Application
             //endregion
             //endregion
         }
-        else{
+        else
+        {
             UsefulFunction.throwException("Error: Check for top conditions and flags for upload an d setup strategies. Program couldn't go through this way.");
         }
+
+        //region prohibit user to return to stage when he can choose start or end point and then press "Run" button
+        returnPreviousStageMI_DisableFlag = true;
+        MenuItem return_previous_stage = (MenuItem) getObjectFromUIListByID(menuBar, Constants.RETURN_PREVIOUS_STAGE);
+        return_previous_stage.setDisable(returnPreviousStageMI_DisableFlag);
+        //endregion
     }
 
     private boolean checkCommandResultForWarningAndError(AlertCommands resultCommand, Map<AlertCommands, String> alertMap, GridPane grid)
     {
         boolean continueExecution = true;
 
-        switch (resultCommand) {
-            case RIGHTS_RESULT: {
+        switch (resultCommand)
+        {
+            case RIGHTS_RESULT:
+            {
                 createAlert(Alert.AlertType.INFORMATION, "Entered valid fields values!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
                 break;
             }
-            case WARNING_RESULT: {
+            case WARNING_RESULT:
+            {
                 createAlert(Alert.AlertType.WARNING, "Entered invalid values!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
                 continueExecution = false;
                 break;
             }
-            case ERROR_RESULT: {
+            case ERROR_RESULT:
+            {
                 createAlert(Alert.AlertType.ERROR, "Total error!", resultCommand.getCommand() + System.lineSeparator() + alertMap.get(resultCommand));
                 continueExecution = false;
                 break;
@@ -424,9 +477,10 @@ public class Launcher extends Application
         canvas.setMinWidth(Constants.SCREEN_WEIGHT * Constants.CANVAS_WEIGHT_IN_PERCENT);
         canvas.setMinHeight(Constants.SCREEN_HEIGHT * Constants.CANVAS_HEIGHT_IN_PERCENT);
         canvas.setBorder(new Border(new BorderStroke(Constants.CANVAS_BORDER_COLOR, BorderStrokeStyle.SOLID, null, Constants.CANVAS_BORDER_WIDTH)));
-        canvas.setOnMouseClicked( e->{
+        canvas.setOnMouseClicked(e -> {
             //check for max nodes amount which can be set up on the canvas
-            if(circlesNodesOnCanvas.size() >= graph.Nodes().size()) {
+            if (circlesNodesOnCanvas.size() >= graph.Nodes().size())
+            {
                 //createAlert(Alert.AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
                 return;
             }
@@ -442,18 +496,21 @@ public class Launcher extends Application
             canvas.getChildren().add(nodeNumberText);
 
             //check for last added node on canvas
-            if(circlesNodesOnCanvas.size() == graph.Nodes().size()) {
+            if (circlesNodesOnCanvas.size() == graph.Nodes().size())
+            {
                 GraphDrawer.drawGraphEdges(graph, canvas, grid);
 
                 //set up events handlers for every circles nodes on canvas
-                for (MyCircleNode cNode : circlesNodesOnCanvas){
+                for (MyCircleNode cNode : circlesNodesOnCanvas)
+                {
                     cNode.setUpSettings();
                 }
 
                 //set runButton, spinners for root and target nodes DISABLE as FALSE. In other words, activate them
                 runButton.setDisable(false);
 
-                for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
+                for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage)
+                {
                     spinner.setDisable(false);
                 }
             }
@@ -466,37 +523,51 @@ public class Launcher extends Application
     {
         String listName = listWithObjects.getClass().getTypeName();
 
-        if(listName == menuBar.getClass().getTypeName()) {
-            for (Menu menu : menuBar.getMenus()){
-                for (MenuItem mi : menu.getItems()){
-                    if(mi.getId() != null && !mi.getId().isEmpty()) {
-                        if (mi.getId().equalsIgnoreCase(objectIdToBeReturned)) {
+        if (listName == menuBar.getClass().getTypeName())
+        {
+            for (Menu menu : menuBar.getMenus())
+            {
+                for (MenuItem mi : menu.getItems())
+                {
+                    if (mi.getId() != null && !mi.getId().isEmpty())
+                    {
+                        if (mi.getId().equalsIgnoreCase(objectIdToBeReturned))
+                        {
                             return mi;
                         }
                     }
                 }
             }
         }
-        else if(listName == grid.getClass().getTypeName()){
-            for (Node node : grid.getChildren()){
-                if(node.getId() != null && !node.getId().isEmpty()) {
-                    if (node.getId().equalsIgnoreCase(objectIdToBeReturned)) {
+        else if (listName == grid.getClass().getTypeName())
+        {
+            for (Node node : grid.getChildren())
+            {
+                if (node.getId() != null && !node.getId().isEmpty())
+                {
+                    if (node.getId().equalsIgnoreCase(objectIdToBeReturned))
+                    {
                         return node;
                     }
                 }
             }
         }
-        else if(listName == canvas.getClass().getTypeName()){
-            for (Node node : canvas.getChildren()){
-                if(node.getId() != null && !node.getId().isEmpty()) {
-                    if (node.getId().equalsIgnoreCase(objectIdToBeReturned)) {
+        else if (listName == canvas.getClass().getTypeName())
+        {
+            for (Node node : canvas.getChildren())
+            {
+                if (node.getId() != null && !node.getId().isEmpty())
+                {
+                    if (node.getId().equalsIgnoreCase(objectIdToBeReturned))
+                    {
                         return node;
                     }
                 }
             }
         }
 
-        UsefulFunction.throwException("Error: Conditions haven't worked. It may be because some another list of UI objects exists, but it isn't used in these above conditions. You should add this new list in condition.");
+        UsefulFunction.throwException(
+                "Error: Conditions haven't worked. It may be because some another list of UI objects exists, but it isn't used in these above conditions. You should add this new list in condition.");
         return null;
     }
 
@@ -509,12 +580,12 @@ public class Launcher extends Application
         GridPane.setHalignment(runButton, HPos.RIGHT);
         runButton.setCursor(Cursor.HAND);
         runButton.setOnAction((e_2) -> {
+            gainCrucialAlgorithmAndDraw(grid, spinners.get(0), spinners.get(1));
             //region allow user to return to previous stage. For "upload file" stage is root and target nodes choosing and for "set up manually" that stage is random graph generator form
             returnPreviousStageMI_DisableFlag = false;
             MenuItem return_previous_stage = (MenuItem) getObjectFromUIListByID(menuBar, Constants.RETURN_PREVIOUS_STAGE);
             return_previous_stage.setDisable(returnPreviousStageMI_DisableFlag);
             //endregion
-            gainCrucialAlgorithmAndDraw(grid, spinners.get(0), spinners.get(1));
         });
 
         return runButton;
@@ -522,7 +593,8 @@ public class Launcher extends Application
 
     private void gainCrucialAlgorithmAndDraw(GridPane grid, MySpinner<Integer> spinnerForRootNode, MySpinner<Integer> spinnerForTargetNode)
     {
-        try {
+        try
+        {
             //region Initiate Dekstra algorithm & DO algorithm
             DekstraAlgorithm algorithm = new DekstraAlgorithm(graph);
             AlertCommands alertCommand = algorithm.DO(spinnerForRootNode.getCurrentValue(), spinnerForTargetNode.getCurrentValue());
@@ -534,7 +606,8 @@ public class Launcher extends Application
             alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. There is no such a path. Check for it.");
             alertMap.put(alertCommand.ERROR_RESULT, "Error. There is no such a path.");
             boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
-            if(!continueExecution) {
+            if (!continueExecution)
+            {
                 setUpGraphNodesAsUnusedInForwardAlthm();
                 return;
             }
@@ -601,11 +674,14 @@ public class Launcher extends Application
 
             clearGraphNodes();
             clearRootAndTarget_labels_spinners();
+
         }
-        catch (ExecutionException e1) {
+        catch (ExecutionException e1)
+        {
             e1.printStackTrace();
         }
-        catch (InterruptedException e1) {
+        catch (InterruptedException e1)
+        {
             e1.printStackTrace();
         }
     }
@@ -643,7 +719,8 @@ public class Launcher extends Application
         //endregion
 
         //MySpinners list
-        rootAndTargetNode_spinners_forRunStage.addAll(spinnerForRootNode, spinnerForTargetNode);
+        rootAndTargetNode_spinners_forRunStage.add(spinnerForRootNode);
+        rootAndTargetNode_spinners_forRunStage.add(spinnerForTargetNode);
 
         //Labels list
         rootAndTargetNode_labels_forRunStage.add(rootNode_lbl);
@@ -657,7 +734,7 @@ public class Launcher extends Application
         Label label = new Label(text.getText());
         label.setFont(Font.font(fontFamily, fontWeight, fontSize));
         label.setPadding(new Insets(padding));
-        if(setBorder) label.setBorder(new Border(new BorderStroke(Constants.LABEL_BORDER_COLOR, BorderStrokeStyle.SOLID, null, Constants.LABEL_BORDER_WIDTH)));
+        if (setBorder) label.setBorder(new Border(new BorderStroke(Constants.LABEL_BORDER_COLOR, BorderStrokeStyle.SOLID, null, Constants.LABEL_BORDER_WIDTH)));
         //label.setBackground(new Background(new BackgroundFill(Color.PINK, CornerRadii.EMPTY, Insets.EMPTY)));
         GridPane.setHalignment(label, hPos);
         return label;
@@ -684,17 +761,20 @@ public class Launcher extends Application
 
         List<String> exceptIds = Arrays.asList(exceptIdsInArray);
 
-        if(gridNodesList == null || gridNodesList.isEmpty() || exceptIdsInArray == null || exceptIdsInArray.length == 0) return;
+        if (gridNodesList == null || gridNodesList.isEmpty() || exceptIdsInArray == null || exceptIdsInArray.length == 0) return;
 
         //region Clear UI objects
         ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
-        for (Node node : gridNodesList) {
+        for (Node node : gridNodesList)
+        {
             String node_ID = node.getId();
 
             if (node_ID == null || node_ID.isEmpty()) continue;
 
-            for (String exceptId : exceptIds){
-                if (exceptId.equalsIgnoreCase(node_ID)) {
+            for (String exceptId : exceptIds)
+            {
+                if (exceptId.equalsIgnoreCase(node_ID))
+                {
                     newGridNodesList.add(node);
                     break;
                 }
@@ -703,7 +783,8 @@ public class Launcher extends Application
 
         gridNodesList.clear();
 
-        for (Node savedNode : newGridNodesList) {
+        for (Node savedNode : newGridNodesList)
+        {
             gridNodesList.add(savedNode);
         }
         //endregion
@@ -715,22 +796,26 @@ public class Launcher extends Application
         //convert array to list
         List<String> IDsToRemove = Arrays.asList(IDsToRemoveInArray);
 
-        if(gridNodesList == null || gridNodesList.isEmpty() || IDsToRemove == null || IDsToRemove.isEmpty()) return;
+        if (gridNodesList == null || gridNodesList.isEmpty() || IDsToRemove == null || IDsToRemove.isEmpty()) return;
 
         //region Clear UI objects
         boolean nodeIdMustBeRemoved = false;
         ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
-        for (Node node : gridNodesList) {
+        for (Node node : gridNodesList)
+        {
             String node_ID = node.getId();
 
-            for (String idToRemove : IDsToRemove){
-                if (idToRemove.equalsIgnoreCase(node_ID)) {
+            for (String idToRemove : IDsToRemove)
+            {
+                if (idToRemove.equalsIgnoreCase(node_ID))
+                {
                     nodeIdMustBeRemoved = true;
                     break;
                 }
             }
 
-            if(nodeIdMustBeRemoved == false) {
+            if (nodeIdMustBeRemoved == false)
+            {
                 newGridNodesList.add(node);
             }
 
@@ -739,7 +824,8 @@ public class Launcher extends Application
 
         gridNodesList.clear();
 
-        for (Node savedNode : newGridNodesList) {
+        for (Node savedNode : newGridNodesList)
+        {
             gridNodesList.add(savedNode);
         }
         //endregion
@@ -747,17 +833,23 @@ public class Launcher extends Application
 
     private void clearCanvasObjects()
     {
-        if(canvas != null) {
-            if(canvas.getChildren() != null) {
-                if(!canvas.getChildren().isEmpty()) {
+        if (canvas != null)
+        {
+            if (canvas.getChildren() != null)
+            {
+                if (!canvas.getChildren().isEmpty())
+                {
                     canvas.getChildren().clear();
                 }
             }
         }
 
-        if(graph != null){
-            if(graph.Nodes() != null) {
-                for (DekstraNode node : graph.Nodes()){
+        if (graph != null)
+        {
+            if (graph.Nodes() != null)
+            {
+                for (DekstraNode node : graph.Nodes())
+                {
                     node.setUpOnCanvas(false);
                 }
             }
@@ -766,9 +858,12 @@ public class Launcher extends Application
 
     private void clearGraphNodes()
     {
-        if(graph != null) {
-            if(graph.Nodes() != null) {
-                if(!graph.Nodes().isEmpty()) {
+        if (graph != null)
+        {
+            if (graph.Nodes() != null)
+            {
+                if (!graph.Nodes().isEmpty())
+                {
                     graph.Nodes().clear();
                 }
             }
@@ -777,10 +872,14 @@ public class Launcher extends Application
 
     private void setUpGraphNodesAsUnusedInForwardAlthm()
     {
-        if(graph != null) {
-            if(graph.Nodes() != null) {
-                if(!graph.Nodes().isEmpty()) {
-                    for (DekstraNode node : graph.Nodes()){
+        if (graph != null)
+        {
+            if (graph.Nodes() != null)
+            {
+                if (!graph.Nodes().isEmpty())
+                {
+                    for (DekstraNode node : graph.Nodes())
+                    {
                         node.setWasUsedInForwardAlthm(false);
                     }
                 }
@@ -790,24 +889,31 @@ public class Launcher extends Application
 
     private void clearCircles()
     {
-        if(circlesNodesOnCanvas != null) {
-            if(!circlesNodesOnCanvas.isEmpty()) {
+        if (circlesNodesOnCanvas != null)
+        {
+            if (!circlesNodesOnCanvas.isEmpty())
+            {
                 circlesNodesOnCanvas.clear();
             }
         }
     }
 
-    private void clearRootAndTarget_labels_spinners(){
+    private void clearRootAndTarget_labels_spinners()
+    {
         //labels
-        if(rootAndTargetNode_labels_forRunStage != null) {
-            if(!rootAndTargetNode_labels_forRunStage.isEmpty()) {
+        if (rootAndTargetNode_labels_forRunStage != null)
+        {
+            if (!rootAndTargetNode_labels_forRunStage.isEmpty())
+            {
                 rootAndTargetNode_labels_forRunStage.clear();
             }
         }
 
         //spinners
-        if(rootAndTargetNode_spinners_forRunStage != null) {
-            if(!rootAndTargetNode_spinners_forRunStage.isEmpty()) {
+        if (rootAndTargetNode_spinners_forRunStage != null)
+        {
+            if (!rootAndTargetNode_spinners_forRunStage.isEmpty())
+            {
                 rootAndTargetNode_spinners_forRunStage.clear();
             }
         }

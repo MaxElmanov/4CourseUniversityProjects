@@ -65,7 +65,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
             if (readyListOfMap != null && !readyListOfMap.isEmpty())
             {
                 //UsefulFunction.fillUpMapByReverseList(map, pathNumber, readyListOfMap);
-                UsefulFunction.fillUpListByReverseCollection(listOfMap, readyListOfMap);
+                UsefulFunction.fillUpListByReverseList(listOfMap, readyListOfMap);
             }
 
             while (currentNode != null)
@@ -88,7 +88,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
 
             //List<Integer> listOfMap = map.get(pathNumber);
             // [listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
-            DekstraNode nextNode = Graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
+            DekstraNode nextNode = graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
 
             DekstraNode nextCurrentNode = getNextCurrentNodeOfReadyListOfMap(nextNode, listOfMap);
             List<Integer> readyListOfMap = getReadyListOfMap(nextCurrentNode, listOfMap);
@@ -143,7 +143,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
 
         if (parentNodes.size() == 1)
         {
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodes.get(0));
+            DekstraNode parentNode = graph.getNodeByNumber(parentNodes.get(0));
 
             return parentNode;
         }
@@ -156,7 +156,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
                 for (int i = 0; i < parentNodes.size(); i++)
                 {
                     int parentNodeNumber = parentNodes.get(i);
-                    DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+                    DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
                     if (parentNode != null)
                     {
                         UsefulFunction.fillUpMap(nodesCheckers, currentNode.getNumber(), parentNodeNumber);
@@ -174,7 +174,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
                     if (!nodeCheckersList.contains(parentNodeNumber))
                     {
                         UsefulFunction.fillUpMap(nodesCheckers, currentNode.getNumber(), parentNodeNumber);
-                        DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+                        DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
 
                         return parentNode;
                     }
@@ -234,7 +234,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
             {
                 if (listInMap.contains(nextNodeNumber))
                 {
-                    DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+                    DekstraNode nextNode = graph.getNodeByNumber(nextNodeNumber);
                     if (nextNode.getParents().size() > 1)
                     {
                         return nextNode;

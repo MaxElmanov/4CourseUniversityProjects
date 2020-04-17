@@ -64,7 +64,7 @@ public class DekstraAlgorithm
 
     public String getBestPathWeight()
     {
-        return String.valueOf(Graph.getNodeByNumber(endPoint).getBestWeight());
+        return String.valueOf(graph.getNodeByNumber(endPoint).getBestWeight());
     }
 
     public long getAlgorithmSpentTime()
@@ -95,8 +95,8 @@ public class DekstraAlgorithm
 
         executeDekstraAlgorithm();
 
-        DekstraNode rootNode = Graph.getNodeByNumber(inputStartPoint);
-        DekstraNode targetNode = Graph.getNodeByNumber(inputEndPoint);
+        DekstraNode rootNode = graph.getNodeByNumber(inputStartPoint);
+        DekstraNode targetNode = graph.getNodeByNumber(inputEndPoint);
 
         //check for "rootNode" and "targetNode" identity
         if (rootNode.equals(targetNode)) return AlertCommands.RIGHTS_RESULT;
@@ -136,7 +136,7 @@ public class DekstraAlgorithm
 
             if (!areThereNodesWhichNotToBeUsedInForwardAlgthm()) {
                 System.out.println("Algorithm is finished");
-                System.out.println("minimal path from " + startPoint + " to " + endPoint + " = <" + Graph.getNodeByNumber(endPoint).getBestWeight() + ">\n");
+                System.out.println("minimal path from " + startPoint + " to " + endPoint + " = <" + graph.getNodeByNumber(endPoint).getBestWeight() + ">\n");
                 break;
             }
 
@@ -163,7 +163,7 @@ public class DekstraAlgorithm
 
             List<Integer> weightsToNextNodes = minWeightNode.getWeights();
             for (int i = 0; i < nextNodes.size(); i++) {
-                DekstraNode currentNode = Graph.getNodeByNumber(nextNodes.get(i));
+                DekstraNode currentNode = graph.getNodeByNumber(nextNodes.get(i));
                 int newPotentialWeight = minWeightNode.getBestWeight() + weightsToNextNodes.get(i);
 
                 if (newPotentialWeight <= currentNode.getBestWeight()) {
@@ -221,7 +221,7 @@ public class DekstraAlgorithm
     private void fillUpSubGraphFromRootToTargetNode(DekstraNode rootNode, DekstraNode targetOrParentNode, List<DekstraNode> subGraph)
     {
         for (Integer parentNumber : targetOrParentNode.getParents()){
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNumber);
+            DekstraNode parentNode = graph.getNodeByNumber(parentNumber);
 
             if(parentNode.equals(rootNode) || subGraph.contains(parentNode)) continue;
 
@@ -235,7 +235,7 @@ public class DekstraAlgorithm
         boolean listNodesWithAddedBPIWasChanged = false;
 
         for (Integer nextNodeNumber : rootNode.getNextNodes()) {
-            DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+            DekstraNode nextNode = graph.getNodeByNumber(nextNodeNumber);
             DekstraNode tempResultNode = null;
             //it means that nextNode index hasn't counted yet
             if (nextNode.getBackPathIndex() == 0) {
@@ -271,8 +271,9 @@ public class DekstraAlgorithm
         Random rand = new Random();
         int size = listNodesWithAddedBPI.size();
 
-        while (size <= 0) {
-            UsefulFunction.throwException("You can't get a random number because list is empty");
+        if (size <= 0) {
+            //UsefulFunction.throwException("You can't get a random number because list is empty");
+            return null;
         }
 
         int randomIndex = rand.nextInt(size);
@@ -290,7 +291,7 @@ public class DekstraAlgorithm
     {
         //checking for "parentNodeNumber" equals 0
         for (Integer parentNodeNumber : node.getParents()) {
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+            DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
             if (parentNode.getBackPathIndex() == 0) {
                 //parentNode.setZeroBackPathIndex();//on the off-chance
                 return null;
@@ -299,7 +300,7 @@ public class DekstraAlgorithm
 
         //it will be invoked if all parents of "node" don't equal 0
         for (Integer parentNodeNumber : node.getParents()) {
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+            DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
             node.addBackPathIndex(parentNode.getBackPathIndex());
         }
 
@@ -366,7 +367,7 @@ public class DekstraAlgorithm
         }
 
         for (Integer parentNodeNumber : currentNodeParentsNumbers) {
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+            DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
 
             if ((nodeParentsHaveManyParents(parentNode) || currentNodeParentsNumbers.size() > 1) && !UsefulFunction.listContainsElement(paths, currentNode.getNumber())) {
 
@@ -377,7 +378,7 @@ public class DekstraAlgorithm
 
         for (int i = 0; i < currentNodeParentsNumbers.size(); i++) {
             int parentNodeNumber = currentNodeParentsNumbers.get(i);
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+            DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
 
             if (currentNode.getParents().size() > 1) {
                 currentNode.setParentCorrespondingChecker(i, true);
@@ -405,7 +406,7 @@ public class DekstraAlgorithm
 
         if (parentNodeParents.size() == 1) {
             int parentNodeIndex = parentNodeParents.get(0);
-            DekstraNode parentNode_parent = Graph.getNodeByNumber(parentNodeIndex);
+            DekstraNode parentNode_parent = graph.getNodeByNumber(parentNodeIndex);
             nodeParentsHaveManyParents(parentNode_parent);
         }
 
@@ -424,7 +425,7 @@ public class DekstraAlgorithm
             int nextNodeNumber = listOfMap.get(i);
 
             if (paths.contains(nextNodeNumber)) {
-                DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+                DekstraNode nextNode = graph.getNodeByNumber(nextNodeNumber);
 
                 //removing until don't run into element with many parents
                 if (nextNode.getParents().size() <= 1) {
@@ -459,7 +460,7 @@ public class DekstraAlgorithm
         for (Integer nextNodeNumber : currentNode.getNextNodes()) {
             if (listInMap.contains(nextNodeNumber) && !alreadyUsedNodesNumbers.contains(nextNodeNumber)) {
 
-                DekstraNode nextNode = Graph.getNodeByNumber(nextNodeNumber);
+                DekstraNode nextNode = graph.getNodeByNumber(nextNodeNumber);
 
                 if(currentNode.equals(nextNode)) continue;
 
@@ -484,7 +485,7 @@ public class DekstraAlgorithm
 //        DekstraBackPathsFinderThread_2_TEST.setMap(map);
 //
 //        DekstraBackPathsFinderThread_2_TEST.setTargetNode(node);
-//        DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
+//        DekstraNode rootNode = graph.getNodeByNumber(startPoint);
 //        DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
 //
 //        node.setInThread(true);
@@ -492,7 +493,7 @@ public class DekstraAlgorithm
 //        Timer.start();
 //
 //        //for (Integer parentNodeNumber : node.getParents()) {
-//            DekstraNode parentNode = Graph.getNodeByNumber(10);
+//            DekstraNode parentNode = graph.getNodeByNumber(10);
 //            new DekstraBackPathsFinderThread_2_TEST(parentNode).CALL();
 //        //}
 //
@@ -515,7 +516,7 @@ public class DekstraAlgorithm
         //DekstraBackPathsFinderThread_2.setTargetNode(targetNode);
         DekstraBackPathsFinderThread_2_TEST.setTargetNode(targetNode);
 
-        DekstraNode rootNode = Graph.getNodeByNumber(startPoint);
+        DekstraNode rootNode = graph.getNodeByNumber(startPoint);
         //DekstraBackPathsFinderThread_2.setRootNode(rootNode);
         DekstraBackPathsFinderThread_2_TEST.setRootNode(rootNode);
 
@@ -533,7 +534,7 @@ public class DekstraAlgorithm
         Timer.start();
 
         for (Integer parentNodeNumber : targetNode.getParents()) {
-            DekstraNode parentNode = Graph.getNodeByNumber(parentNodeNumber);
+            DekstraNode parentNode = graph.getNodeByNumber(parentNodeNumber);
             //futures.add(service.submit(new DekstraBackPathsFinderThread_2(parentNode)));
 
             //generate new pathNumber
