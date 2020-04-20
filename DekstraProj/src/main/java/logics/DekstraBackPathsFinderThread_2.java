@@ -271,7 +271,7 @@ public class DekstraBackPathsFinderThread_2 implements Callable<Integer> //Runna
         DekstraBackPathsFinderThread_2.amountAllBackPaths = amountAllBackPaths;
     }
 
-    public static BlockingQueue<Future<Integer>> getFutures()
+    public static BlockingQueue<Future<Integer>> getFutures_1()
     {
         return futures;
     }

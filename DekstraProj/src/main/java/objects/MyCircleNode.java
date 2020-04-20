@@ -9,6 +9,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
+import launcher.Launcher;
 import logics.GraphDrawer;
 
 public class MyCircleNode extends Circle
@@ -17,14 +18,17 @@ public class MyCircleNode extends Circle
     private GridPane grid;
     private Pane canvas;
     private int number;
-    private boolean mouseWasPressed = false;
+    private Launcher launcher;
+    private boolean MouseEntered = false;
+    private boolean redTempStrokeCircleWasDeleted = false;
 
-    public MyCircleNode(double centerX, double centerY, double radius, Color nodeColor, Graph graph, Pane canvas, GridPane grid)
+    public MyCircleNode(double centerX, double centerY, double radius, Color nodeColor, Graph graph, Pane canvas, GridPane grid, Launcher launcher)
     {
         super(centerX, centerY, radius);
         this.graph = graph;
         this.canvas = canvas;
         this.grid = grid;
+        this.launcher = launcher;
         this.setCursor(Cursor.HAND);
         this.setFill(nodeColor);
 
@@ -33,8 +37,10 @@ public class MyCircleNode extends Circle
 
     private int getUnusedNodeNumberAsInteger(double x, double y)
     {
-        for (DekstraNode node : graph.Nodes()){
-            if(!node.isSetUpOnCanvas()) {
+        for (DekstraNode node : graph.Nodes())
+        {
+            if (!node.isSetUpOnCanvas())
+            {
                 node.setUpOnCanvas(true);
                 node.setX(x);
                 node.setY(y);
@@ -62,6 +68,33 @@ public class MyCircleNode extends Circle
 
     public void setUpSettings()
     {
+        this.setOnMouseEntered(eventOut -> {
+            if (MouseEntered == false)
+            {
+                Circle redTempCircle = new Circle(this.getCenterX(), this.getCenterY(), Constants.RED_TEMP_STROKE_CIRCLE_RADIUS);
+                redTempCircle.setStroke(Constants.RED_TEMP_CIRCLE_COLOR);
+                redTempCircle.setStrokeWidth(Constants.RED_TEMP_STROKE_CIRCLE_LINE_WIDTH);
+                redTempCircle.setFill(null);
+                redTempCircle.setId(Constants.RED_TEMP_STROKE_CIRCLE_ID);
+
+                canvas.getChildren().add(redTempCircle);
+
+                MouseEntered = true;
+                redTempStrokeCircleWasDeleted = false;
+                System.out.println("setOnMouseEntered");
+            }
+        });
+
+        this.setOnMouseExited(event -> {
+            if (MouseEntered && !redTempStrokeCircleWasDeleted)
+            {
+                Circle redTempCircle = (Circle) launcher.getObjectFromUIListByID(canvas, Constants.RED_TEMP_STROKE_CIRCLE_ID);
+                canvas.getChildren().remove(redTempCircle);
+                redTempStrokeCircleWasDeleted = true;
+                MouseEntered = false;
+            }
+        });
+
         this.setOnMouseClicked(event -> {
             System.out.println("click");
             return;
@@ -69,60 +102,33 @@ public class MyCircleNode extends Circle
 
         this.setOnMousePressed(event -> {
             System.out.println("press");
-            System.out.println(" number: " + this.number);
-            System.out.println(" old x: " + this.getCenterX());
-            System.out.println(" old y: " + this.getCenterY());
-            System.out.println();
-
-            mouseWasPressed = true;
+//            System.out.println(" number: " + this.number);
+//            System.out.println(" old x: " + this.getCenterX());
+//            System.out.println(" old y: " + this.getCenterY());
+//            System.out.println();
             event.consume();
         });
 
-//        this.setOnMouseDragged(event -> {
-//            System.out.println("dragged");
-//            System.out.println(" event x: " + event.getX());
-//            System.out.println(" event y: " + event.getY());
-//            System.out.println();
-//
-//            UsefulFunction.removeCanvasObjectsByID(canvas, Constants.TEMP_YELLOW_NODE_ID);
-//
-//            MyCircleNode tempCircleNode = new MyCircleNode(event.getX(), event.getY(), Constants.NODE_RADIUS, Constants.TEMP_NODE_COLOR, graph, canvas, grid);
-//            tempCircleNode.setId(Constants.TEMP_YELLOW_NODE_ID);
-//            tempCircleNode.setCenterX(event.getX());
-//            tempCircleNode.setCenterY(event.getY());
-//
-//
-//
-//            Text text = this.getUnusedNodeNumberAsText();
-//            canvas.getChildren().add(text);
-//            event.consume();
-//        });
-
         this.setOnMouseReleased(event -> {
             System.out.println("release");
-            //if (event.isControlDown()){
-                this.setCenterX(event.getX());
-                this.setCenterY(event.getY());
+            this.setCenterX(event.getX());
+            this.setCenterY(event.getY());
 
-                DekstraNode node = graph.getNodeByNumber(this.number);
-                node.setX(this.getCenterX());
-                node.setY(this.getCenterY());
+            DekstraNode node = graph.getNodeByNumber(this.number);
+            node.setX(this.getCenterX());
+            node.setY(this.getCenterY());
 
-                GraphDrawer.clearGraphEdges(canvas, this.number);
-                GraphDrawer.drawGraphEdges(graph, canvas, grid);
+            GraphDrawer.clearGraphEdges(canvas, this.number);
+            GraphDrawer.drawGraphEdges(graph, canvas, grid);
 
-                Text text = this.getUnusedNodeNumberAsText();
-                canvas.getChildren().add(text);
+            Text text = this.getUnusedNodeNumberAsText();
+            canvas.getChildren().add(text);
 
-                System.out.println(" new x: " + this.getCenterX());
-                System.out.println(" new y: " + this.getCenterY());
-                System.out.println();
+            System.out.println(" new x: " + this.getCenterX());
+            System.out.println(" new y: " + this.getCenterY());
+            System.out.println();
 
-                mouseWasPressed = false;
-                event.consume();
-            //}
-
-
+            event.consume();
         });
     }
 }

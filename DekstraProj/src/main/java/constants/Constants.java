@@ -28,6 +28,7 @@ public class Constants
     public static final Color WHITE_THEME_TEXT_COLOR = Color.rgb(0, 0, 0);
     public static final Color DARK_THEME_TEXT_COLOR = Color.rgb(255, 255, 255);
     public static final Color NODE_COLOR = Color.rgb(30, 144, 255);
+    public static final Color RED_TEMP_CIRCLE_COLOR = Color.rgb(255, 16, 40);
     public static final Color TEMP_NODE_COLOR = Color.rgb(255, 242, 17);
     public static final Color EDGE_COLOR = Color.rgb(46, 139, 87);
     public static final Color EDGE_ARROW_TIP_COLOR = Color.rgb(64,128,0);
@@ -36,6 +37,8 @@ public class Constants
     public static final BorderWidths CANVAS_BORDER_WIDTH = new BorderWidths(2);
     public static final BorderWidths LABEL_BORDER_WIDTH = new BorderWidths(1);
     public static final Paint CANVAS_BACKGROUND_COLOR = Color.TRANSPARENT;
+    public static final double RED_TEMP_STROKE_CIRCLE_RADIUS = 10.5;
+    public static final double RED_TEMP_STROKE_CIRCLE_LINE_WIDTH = 2.5;
     //Graph drawer options
     public static final int NODE_RADIUS = 10; //px
     public static final int NODE_AMOUNT_IN_ROW = 7;
@@ -67,5 +70,5 @@ public class Constants
     public static final String TEMP_YELLOW_NODE_ID = "Temp_Yellow_Node_ID";
     public static final String GENERATE_RANDOM_GRAPH_BUTTON_ID = "Generate_Random_Button_ID";
     public static final String RETURN_PREVIOUS_STAGE = "Return_Previous_Stage_ID";
-
+    public static final String RED_TEMP_STROKE_CIRCLE_ID = "Red_Temp_Circle_ID";
 }

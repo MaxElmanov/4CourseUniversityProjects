@@ -11,25 +11,25 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
 {
     //static
     private static Graph graph;
-    private static ConcurrentMap<Integer, List<Integer>> map;
+    private static Map<Integer, List<Integer>> map;
     private static DekstraNode targetNode;
     private static DekstraNode rootNode;
     private static List<Integer> listOfUsedPathNumbers;
-    private static List<DekstraBackPathsFinderThread_2_TEST> threads;
+    //private static List<DekstraBackPathsFinderThread_2_TEST> threads;
     private static Integer amountAllBackPaths;
 
     //object
     private DekstraNode currentNode;
-    private Integer pathNumber = null;
+    private Integer pathNumber;
     private ConcurrentMap<Integer, List<Integer>> nodesCheckers;
     private List<Integer> readyListOfMap;
     private List<Integer> listOfMap;
 
-    static
-    {
-//        listOfUsedPathNumbers = new Vector<>();
-        map = new ConcurrentHashMap<>();
-    }
+//    static
+//    {
+//        //threads = new ArrayList<>();
+//        map = new ConcurrentHashMap<>();
+//    }
 
     public DekstraBackPathsFinderThread_2_TEST(Integer pathNumber, DekstraNode nextCurrentNode, List<Integer> readyListOfMap, ConcurrentMap<Integer, List<Integer>> nodesCheckers)
     {
@@ -49,7 +49,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
         this.nodesCheckers = new ConcurrentHashMap<>();
 
         this.listOfMap = new ArrayList<>();
-        listOfMap.add(targetNode.getNumber());
+        //listOfMap.add(targetNode.getNumber());
     }
 
     public Integer call()
@@ -58,27 +58,20 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
         {
             System.out.println(Thread.currentThread().getName());
 
-            pathNumber = UsefulFunction.generateNewPathNumberOf(map, listOfUsedPathNumbers);
-            if (pathNumber == null) return pathNumber;
-            listOfUsedPathNumbers.add(pathNumber);
-
             if (readyListOfMap != null && !readyListOfMap.isEmpty())
             {
-                //UsefulFunction.fillUpMapByReverseList(map, pathNumber, readyListOfMap);
                 UsefulFunction.fillUpListByReverseList(listOfMap, readyListOfMap);
             }
 
             while (currentNode != null)
             {
-                //UsefulFunction.fillUpMap(map, pathNumber, currentNode.getNumber());
                 listOfMap.add(currentNode.getNumber());
 
                 List<Integer> parentNodes = currentNode.getParents();
 
                 if (parentNodes == null || parentNodes.isEmpty() || currentNode.equals(rootNode))
                 {
-                    //break;
-                    return pathNumber;
+                    break;
                 }
                 else
                 {
@@ -86,37 +79,48 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
                 }
             }
 
-            //List<Integer> listOfMap = map.get(pathNumber);
-            // [listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
+            //map filling up
+            UsefulFunction.fillUpMapByList(map, pathNumber, listOfMap);
+
+            //[listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
             DekstraNode nextNode = graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
 
+            //get new next current node
             DekstraNode nextCurrentNode = getNextCurrentNodeOfReadyListOfMap(nextNode, listOfMap);
+
+            //get already measured subPath for next listOfMap
             List<Integer> readyListOfMap = getReadyListOfMap(nextCurrentNode, listOfMap);
 
             if (nextCurrentNode != null)
             {
-                //generate new pathNumber
+                //region Generate new pathNumber
                 Integer pathNumber = UsefulFunction.generateNewPathNumberRangeFrom0To(amountAllBackPaths, listOfUsedPathNumbers);
-                if (pathNumber == null) return pathNumber;
+                if (pathNumber == null) return null;
                 listOfUsedPathNumbers.add(pathNumber);
-                //-----------------------------------
+                //endregion
 
-                threads.add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
-                //new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers).start();
+                if (DekstraAlgorithm.getTafu().getThreadsAndFuturesRun_1_Flag())
+                {
+                    DekstraAlgorithm.getTafu().getThreads_2().add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
+                }
+                else if (DekstraAlgorithm.getTafu().getThreadsAndFuturesRun_2_Flag())
+                {
+                    DekstraAlgorithm.getTafu().getThreads_1().add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
+                }
             }
         }
 
         return pathNumber;
     }
 
-    private List<Integer> getReadyListOfMap(DekstraNode readyListOfMapStartNode, List<Integer> listOfMap)
+    private List<Integer> getReadyListOfMap(DekstraNode nextCurrentNode, List<Integer> listOfMap)
     {
-        if (readyListOfMapStartNode == null) return null;
+        if (nextCurrentNode == null) return null;
 
         List<Integer> readyListOfMap = new ArrayList<>();
         boolean needToStartAdding = false;
 
-        //"int i = listOfMap.size() - 2" because don't need to start from "rootNode" [1]. We should commence from "rootNode" "nextNodes" [2, 3, 4, 14, 15]
+        //"int i = listOfMap.size() - 2" because don't need to start from "rootNode" [1]. We should commence from "nextNodes" of "rootNode" [2, 3, 4, 14, 15]
         for (int i = listOfMap.size() - 2; i >= 0; i--)
         {
             int numberOfList = listOfMap.get(i);
@@ -126,7 +130,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
                 readyListOfMap.add(numberOfList);
             }
 
-            if (readyListOfMapStartNode.getNumber() == numberOfList)
+            if (nextCurrentNode.getNumber() == numberOfList)
             {
                 needToStartAdding = true;
             }
@@ -275,15 +279,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
 
     public static void setMap(Map<Integer, List<Integer>> map)
     {
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet())
-        {
-            List<Integer> tempList = new ArrayList<>();
-            for (Integer number : entry.getValue())
-            {
-                tempList.add(number);
-            }
-            DekstraBackPathsFinderThread_2_TEST.map.put(entry.getKey(), tempList);
-        }
+        DekstraBackPathsFinderThread_2_TEST.map = map;
     }
 
     public static void setTargetNode(DekstraNode targetNode)
@@ -294,11 +290,6 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
     public static void setRootNode(DekstraNode rootNode)
     {
         DekstraBackPathsFinderThread_2_TEST.rootNode = rootNode;
-    }
-
-    public static void setThreads(List<DekstraBackPathsFinderThread_2_TEST> threads)
-    {
-        DekstraBackPathsFinderThread_2_TEST.threads = threads;
     }
 
     public static void setAmountAllBackPaths(Integer amountAllBackPaths)
@@ -328,9 +319,4 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
             System.out.println(builder.substring(0, builder.length() - 2));
         }
     }
-
-// public static void shutdown()
-// {
-// service.shutdown();
-// }
 }

@@ -23,6 +23,7 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.scene.control.ToggleGroup;
 import logics.DekstraAlgorithm;
 import logics.GraphDrawer;
 import logics.RandomGraphGenerator;
@@ -54,8 +55,13 @@ public class Launcher extends Application
     private static Boolean returnPreviousStageMI_DisableFlag = true;
     private static Boolean uploadFileFlag = false;
     private static Boolean setUpManuallyFlag = false;
-    private static Boolean runButtonAndSpinnersDisableFlag = true;
+    private static Boolean runButtonLabelsSpinnersRadioButtonsDisableFlag = true;
     private static File uploadFile;
+    /**
+     * if the variable (singleThreadAlgorithmChosenFlag) equals TRUE then program is gonna execute single thread algorithm.
+     * Otherwise, program is gonna execute multi thread algorithm.
+     */
+    private static Boolean singleThreadAlgorithmChosenFlag = true;
 
     public static void main(String[] args) throws ExecutionException, InterruptedException, IOException
     {
@@ -126,7 +132,7 @@ public class Launcher extends Application
         uploadFromFile_mi.setOnAction(((e) -> {
             uploadFileFlag = true;
             setUpManuallyFlag = false;
-            runButtonAndSpinnersDisableFlag = true;
+            runButtonLabelsSpinnersRadioButtonsDisableFlag = true;
 
             //region FileChooser
             final FileChooser fileChooser = new FileChooser();
@@ -147,7 +153,7 @@ public class Launcher extends Application
         setUpParameters_mi.setOnAction((e) -> {
             setUpManuallyFlag = true;
             uploadFileFlag = false;
-            runButtonAndSpinnersDisableFlag = true;
+            runButtonLabelsSpinnersRadioButtonsDisableFlag = true;
             getUploadOrGenerationGraphStageCanvasObjects();
         });
         //endregion
@@ -166,7 +172,7 @@ public class Launcher extends Application
         return_previous_stage.setDisable(returnPreviousStageMI_DisableFlag);
         return_previous_stage.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/return_previous_stage.png"))));
         return_previous_stage.setOnAction((e) -> {
-            runButtonAndSpinnersDisableFlag = false;
+            runButtonLabelsSpinnersRadioButtonsDisableFlag = false;
             getUploadOrGenerationGraphStageCanvasObjects();
         });
         //endregion
@@ -227,14 +233,14 @@ public class Launcher extends Application
                 }
                 //endregion
 
-                getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
-                Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+                createAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
 
-                //region Visibility setup for run stage objects
+                createAndAddToGridAlgorithmsChooserRadioButtons();
+
+                Node runButton = getRunButton(grid, rootAndTargetNode_spinners_forRunStage);
                 runButton.setVisible(true);
-                //endregion
 
-                grid.add(runButton, 1, 3, 1, 1);
+                grid.add(runButton, 1, 4, 1, 1);
                 //endregion
             }
             else{
@@ -278,20 +284,14 @@ public class Launcher extends Application
                     return;
                 }
 
-                getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
-                Node runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+                createAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, graph.Nodes().size(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
 
-                //region Visibility setup for run stage objects
+                createAndAddToGridAlgorithmsChooserRadioButtons();
+
+                Node runButton = getRunButton(grid, rootAndTargetNode_spinners_forRunStage);
                 runButton.setVisible(true);
-    //            for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage){
-    //                spinner.setVisible(true);
-    //            }
-    //            for (Label label : rootAndTargetNode_labels_forRunStage){
-    //                label.setVisible(true);
-    //            }
-                //endregion
 
-                grid.add(runButton, 1, 3, 1, 1);
+                grid.add(runButton, 1, 4, 1, 1);
 
                 canvas = addCanvas(runButton);
                 grid.add(canvas, 2, 1, 8, 9);
@@ -365,7 +365,7 @@ public class Launcher extends Application
                 boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
                 if (!continueExecution)
                 {
-                    runButtonAndSpinnersDisableFlag = false;
+                    runButtonLabelsSpinnersRadioButtonsDisableFlag = false;
                     return;
                 }
                 //endregion
@@ -374,8 +374,11 @@ public class Launcher extends Application
 
                 generateRandomGraph_btn.setVisible(false);
 
-                getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, nodesAmount_spinner.getCurrentValue(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
-                Button runButton = addRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+                createAndAddToGridRootAndTargetNodesNumbers_labels_spinners(grid, nodesAmount_spinner.getCurrentValue(), Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
+
+                Button runButton = getRunButton(grid, rootAndTargetNode_spinners_forRunStage);
+
+                createAndAddToGridAlgorithmsChooserRadioButtons();
 
                 //region Visibility setup for run stage objects
                 //runButton.setVisible(true);
@@ -387,7 +390,7 @@ public class Launcher extends Application
 //                }
                 //endregion
 
-                grid.add(runButton, 1, 3, 1, 1);
+                grid.add(runButton, 1, 4, 1, 1);
 
                 canvas = addCanvas(runButton);
                 grid.add(canvas, 2, 1, 8, 9);
@@ -424,6 +427,36 @@ public class Launcher extends Application
         MenuItem return_previous_stage = (MenuItem) getObjectFromUIListByID(menuBar, Constants.RETURN_PREVIOUS_STAGE);
         return_previous_stage.setDisable(returnPreviousStageMI_DisableFlag);
         //endregion
+    }
+
+    private void createAndAddToGridAlgorithmsChooserRadioButtons()
+    {
+        //this toggle group allow to unite all radio buttons. If one radio button was selected by user then another previously selected radio button become unselected
+        ToggleGroup toggleGroup = new ToggleGroup();
+
+        RadioButton singleThreadAlgorithm_radioBtn = getRadioButton("Single thread", true, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID, toggleGroup, HPos.CENTER);
+        singleThreadAlgorithm_radioBtn.setOnAction(event -> {
+            singleThreadAlgorithmChosenFlag = true;
+        });
+
+        RadioButton multiThreadAlgorithm_radioBtn = getRadioButton("Multi threads", false, Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID, toggleGroup, HPos.CENTER);
+        multiThreadAlgorithm_radioBtn.setOnAction(event -> {
+            singleThreadAlgorithmChosenFlag = false;
+        });
+
+        grid.add(singleThreadAlgorithm_radioBtn, 0, 3, 1, 1);
+        grid.add(multiThreadAlgorithm_radioBtn, 1, 3, 1, 1);
+    }
+
+    private RadioButton getRadioButton(String text, Boolean selected, String id, ToggleGroup toggleGroup, HPos hpos) {
+        RadioButton radioBtn = new RadioButton(text);
+        radioBtn.setSelected(selected);
+        radioBtn.setId(id);
+        radioBtn.setToggleGroup(toggleGroup);
+        GridPane.setHalignment(radioBtn, hpos);
+        radioBtn.setCursor(Cursor.HAND);
+        radioBtn.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
+        return radioBtn;
     }
 
     private boolean checkCommandResultForWarningAndError(AlertCommands resultCommand, Map<AlertCommands, String> alertMap, GridPane grid)
@@ -488,7 +521,7 @@ public class Launcher extends Application
             //if graph was created by random method then "generateRandomGraph_btn" remains in hidden state. Due to that we must remove this hidden button from the canvas
             clearWorkingAreaObjectsWithID(Constants.GENERATE_RANDOM_GRAPH_BUTTON_ID);
 
-            MyCircleNode circleNode = new MyCircleNode(e.getX(), e.getY(), Constants.NODE_RADIUS, Constants.NODE_COLOR, graph, canvas, grid);
+            MyCircleNode circleNode = new MyCircleNode(e.getX(), e.getY(), Constants.NODE_RADIUS, Constants.NODE_COLOR, graph, canvas, grid, this);
             Text nodeNumberText = circleNode.getUnusedNodeNumberAsText();
             circlesNodesOnCanvas.add(circleNode);
             nodeNumbersOnCanvas.add(nodeNumberText);
@@ -501,25 +534,21 @@ public class Launcher extends Application
                 GraphDrawer.drawGraphEdges(graph, canvas, grid);
 
                 //set up events handlers for every circles nodes on canvas
-                for (MyCircleNode cNode : circlesNodesOnCanvas)
-                {
-                    cNode.setUpSettings();
-                }
+                circlesNodesOnCanvas.stream().forEach(cNode -> cNode.setUpSettings());
 
                 //set runButton, spinners for root and target nodes DISABLE as FALSE. In other words, activate them
-                runButton.setDisable(false);
+                runButtonLabelsSpinnersRadioButtonsDisableFlag = false;
 
-                for (MySpinner<Integer> spinner : rootAndTargetNode_spinners_forRunStage)
-                {
-                    spinner.setDisable(false);
-                }
+                runButton.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
+                rootAndTargetNode_spinners_forRunStage.stream().forEach(sp -> sp.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
+                getObjectFromUIListByObjectType(grid, RadioButton.class).stream().forEach(obj -> ((RadioButton)obj).setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
             }
         });
 
         return canvas;
     }
 
-    private Object getObjectFromUIListByID(Object listWithObjects, String objectIdToBeReturned)
+    public Object getObjectFromUIListByID(Object listWithObjects, String objectIdToBeReturned)
     {
         String listName = listWithObjects.getClass().getTypeName();
 
@@ -571,11 +600,68 @@ public class Launcher extends Application
         return null;
     }
 
-    private Button addRunButton(GridPane grid, ObservableList<MySpinner<Integer>> spinners)
+    private List<Object> getObjectFromUIListByObjectType(Object listWithObjects, Class<?> objectType)
+    {
+        List<Object> listOfObjects = new ArrayList<>();
+
+        String listName = listWithObjects.getClass().getTypeName();
+
+        if (listName == menuBar.getClass().getTypeName())
+        {
+            for (Menu menu : menuBar.getMenus())
+            {
+                for (MenuItem mi : menu.getItems())
+                {
+                    if (mi.getClass() != null)
+                    {
+                        if (mi.getClass() == objectType)
+                        {
+                            listOfObjects.add(mi);
+                        }
+                    }
+                }
+            }
+        }
+        else if (listName == grid.getClass().getTypeName())
+        {
+            for (Node node : grid.getChildren())
+            {
+                if (node.getClass() != null)
+                {
+                    if (node.getClass() == objectType)
+                    {
+                        listOfObjects.add(node);
+                    }
+                }
+            }
+        }
+        else if (listName == canvas.getClass().getTypeName())
+        {
+            for (Node node : canvas.getChildren())
+            {
+                if (node.getClass() != null)
+                {
+                    if (node.getClass() == objectType)
+                    {
+                        listOfObjects.add(node);
+                    }
+                }
+            }
+        }
+
+        if(listOfObjects.isEmpty()) {
+            UsefulFunction.throwException(
+                    "Error: Conditions haven't worked. It may be because some another list of UI objects exists, but it isn't used in these above conditions. You should add this new list in condition.");
+        }
+
+        return listOfObjects;
+    }
+
+    private Button getRunButton(GridPane grid, ObservableList<MySpinner<Integer>> spinners)
     {
         Button runButton = new Button("Run");
         //runButton.setVisible(true);
-        runButton.setDisable(runButtonAndSpinnersDisableFlag);
+        runButton.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
         runButton.setId(Constants.LEFTSIDE_OBJECT_FOR_BEFORE_RUN_STAGE_ID);
         GridPane.setHalignment(runButton, HPos.RIGHT);
         runButton.setCursor(Cursor.HAND);
@@ -597,6 +683,7 @@ public class Launcher extends Application
         {
             //region Initiate Dekstra algorithm & DO algorithm
             DekstraAlgorithm algorithm = new DekstraAlgorithm(graph);
+            algorithm.setSingleThreadAlgorithmChosenFlag(singleThreadAlgorithmChosenFlag);
             AlertCommands alertCommand = algorithm.DO(spinnerForRootNode.getCurrentValue(), spinnerForTargetNode.getCurrentValue());
             //endregion
 
@@ -686,7 +773,7 @@ public class Launcher extends Application
         }
     }
 
-    private void getAndAddToGridRootAndTargetNodesNumbers_labels_spinners(GridPane grid, Integer nodesAmount, String leftsideObjectId)
+    private void createAndAddToGridRootAndTargetNodesNumbers_labels_spinners(GridPane grid, Integer nodesAmount, String leftsideObjectId)
     {
         //region Root node label
         Label rootNode_lbl = createNewLabel("Root node: ", Constants.defaultFontFamily, FontWeight.NORMAL, Constants.bigFontSize, 5, HPos.LEFT, false);
@@ -699,7 +786,7 @@ public class Launcher extends Application
         MySpinner<Integer> spinnerForRootNode = createNewSpinner(Constants.MIN_GENERATED_NUMBER, nodesAmount, Constants.defaultInitialValueForSpinner, HPos.RIGHT);
         spinnerForRootNode.setId(leftsideObjectId);
         //spinnerForRootNode.setVisible(false);
-        spinnerForRootNode.setDisable(runButtonAndSpinnersDisableFlag);
+        spinnerForRootNode.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
         grid.add(spinnerForRootNode, 1, 1, 1, 1);
         //endregion
 
@@ -714,7 +801,7 @@ public class Launcher extends Application
         MySpinner<Integer> spinnerForTargetNode = createNewSpinner(Constants.MIN_GENERATED_NUMBER, nodesAmount, Constants.defaultInitialValueForSpinner, HPos.RIGHT);
         spinnerForTargetNode.setId(leftsideObjectId);
         //spinnerForTargetNode.setVisible(false);
-        spinnerForTargetNode.setDisable(runButtonAndSpinnersDisableFlag);
+        spinnerForTargetNode.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
         grid.add(spinnerForTargetNode, 1, 2, 1, 1);
         //endregion
 
