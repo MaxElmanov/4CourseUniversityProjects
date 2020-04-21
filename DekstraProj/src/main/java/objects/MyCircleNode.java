@@ -110,25 +110,27 @@ public class MyCircleNode extends Circle
         });
 
         this.setOnMouseReleased(event -> {
-            System.out.println("release");
-            this.setCenterX(event.getX());
-            this.setCenterY(event.getY());
+            if(launcher.cursorInBoundsOf(event, canvas, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_TOP, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_RIGHT, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_BOTTOM, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_LEFT)) {
+                System.out.println("release");
+                this.setCenterX(event.getX());
+                this.setCenterY(event.getY());
 
-            DekstraNode node = graph.getNodeByNumber(this.number);
-            node.setX(this.getCenterX());
-            node.setY(this.getCenterY());
+                DekstraNode node = graph.getNodeByNumber(this.number);
+                node.setX(this.getCenterX());
+                node.setY(this.getCenterY());
 
-            GraphDrawer.clearGraphEdges(canvas, this.number);
-            GraphDrawer.drawGraphEdges(graph, canvas, grid);
+                GraphDrawer.clearGraphEdges(canvas, this.number);
+                GraphDrawer.drawGraphEdges(graph, canvas, grid);
 
-            Text text = this.getUnusedNodeNumberAsText();
-            canvas.getChildren().add(text);
+                Text text = this.getUnusedNodeNumberAsText();
+                canvas.getChildren().add(text);
 
-            System.out.println(" new x: " + this.getCenterX());
-            System.out.println(" new y: " + this.getCenterY());
-            System.out.println();
+                System.out.println(" new x: " + this.getCenterX());
+                System.out.println(" new y: " + this.getCenterY());
+                System.out.println();
 
-            event.consume();
+                event.consume();
+            }
         });
     }
 }

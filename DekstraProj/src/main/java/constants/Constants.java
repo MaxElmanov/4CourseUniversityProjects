@@ -37,8 +37,12 @@ public class Constants
     public static final BorderWidths CANVAS_BORDER_WIDTH = new BorderWidths(2);
     public static final BorderWidths LABEL_BORDER_WIDTH = new BorderWidths(1);
     public static final Paint CANVAS_BACKGROUND_COLOR = Color.TRANSPARENT;
-    public static final double RED_TEMP_STROKE_CIRCLE_RADIUS = 10.5;
-    public static final double RED_TEMP_STROKE_CIRCLE_LINE_WIDTH = 2.5;
+    public static final double RED_TEMP_STROKE_CIRCLE_RADIUS = 10;
+    public static final double RED_TEMP_STROKE_CIRCLE_LINE_WIDTH = 2;
+    public static final double PADDING_FROM_BOUNDS_NOT_TO_SPAWN_TOP = 30;
+    public static final double PADDING_FROM_BOUNDS_NOT_TO_SPAWN_RIGHT = 15;
+    public static final double PADDING_FROM_BOUNDS_NOT_TO_SPAWN_BOTTOM = 15;
+    public static final double PADDING_FROM_BOUNDS_NOT_TO_SPAWN_LEFT = 15;
     //Graph drawer options
     public static final int NODE_RADIUS = 10; //px
     public static final int NODE_AMOUNT_IN_ROW = 7;

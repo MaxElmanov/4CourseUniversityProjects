@@ -17,6 +17,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
@@ -214,7 +215,8 @@ public class Launcher extends Application
         if (uploadFileFlag)
         {
             //it means that user has already upload file, get short back paths(SBP). Then he decided to return to a previous stage to change start and end point.
-            if (returnPreviousStageMI_DisableFlag == false){
+            if (returnPreviousStageMI_DisableFlag == false)
+            {
                 //region Return previous stage event
 
                 //region Before upload execution Cleaning
@@ -243,7 +245,8 @@ public class Launcher extends Application
                 grid.add(runButton, 1, 4, 1, 1);
                 //endregion
             }
-            else{
+            else
+            {
                 //region Upload a graph from file
 
                 //region Before upload execution Cleaning
@@ -448,7 +451,8 @@ public class Launcher extends Application
         grid.add(multiThreadAlgorithm_radioBtn, 1, 3, 1, 1);
     }
 
-    private RadioButton getRadioButton(String text, Boolean selected, String id, ToggleGroup toggleGroup, HPos hpos) {
+    private RadioButton getRadioButton(String text, Boolean selected, String id, ToggleGroup toggleGroup, HPos hpos)
+    {
         RadioButton radioBtn = new RadioButton(text);
         radioBtn.setSelected(selected);
         radioBtn.setId(id);
@@ -512,7 +516,7 @@ public class Launcher extends Application
         canvas.setBorder(new Border(new BorderStroke(Constants.CANVAS_BORDER_COLOR, BorderStrokeStyle.SOLID, null, Constants.CANVAS_BORDER_WIDTH)));
         canvas.setOnMouseClicked(e -> {
             //check for max nodes amount which can be set up on the canvas
-            if (circlesNodesOnCanvas.size() >= graph.Nodes().size())
+            if (!cursorInBoundsOf(e, canvas, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_TOP, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_RIGHT, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_BOTTOM, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_LEFT) || circlesNodesOnCanvas.size() >= graph.Nodes().size())
             {
                 //createAlert(Alert.AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
                 return;
@@ -541,11 +545,36 @@ public class Launcher extends Application
 
                 runButton.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
                 rootAndTargetNode_spinners_forRunStage.stream().forEach(sp -> sp.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
-                getObjectFromUIListByObjectType(grid, RadioButton.class).stream().forEach(obj -> ((RadioButton)obj).setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
+                getObjectFromUIListByObjectType(grid, RadioButton.class).stream().forEach(obj -> ((RadioButton) obj).setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
             }
         });
 
         return canvas;
+    }
+
+    public boolean cursorInBoundsOf(MouseEvent e,
+                                    Pane canvas,
+                                    double paddingFromBoundsNotToSpawnTOP,
+                                    double paddingFromBoundsNotToSpawnRIGHT,
+                                    double paddingFromBoundsNotToSpawnBOTTOM,
+                                    double paddingFromBoundsNotToSpawnLEFT)
+    {
+        double x = e.getX();
+        double y = e.getY();
+
+        double width = canvas.getWidth();
+        double height = canvas.getHeight();
+
+        if (y < paddingFromBoundsNotToSpawnTOP || x < paddingFromBoundsNotToSpawnLEFT)
+        {
+            return false;
+        }
+        else if (x > (width - paddingFromBoundsNotToSpawnRIGHT) || y > (height - paddingFromBoundsNotToSpawnBOTTOM))
+        {
+            return false;
+        }
+
+        return true;
     }
 
     public Object getObjectFromUIListByID(Object listWithObjects, String objectIdToBeReturned)
@@ -649,7 +678,8 @@ public class Launcher extends Application
             }
         }
 
-        if(listOfObjects.isEmpty()) {
+        if (listOfObjects.isEmpty())
+        {
             UsefulFunction.throwException(
                     "Error: Conditions haven't worked. It may be because some another list of UI objects exists, but it isn't used in these above conditions. You should add this new list in condition.");
         }
