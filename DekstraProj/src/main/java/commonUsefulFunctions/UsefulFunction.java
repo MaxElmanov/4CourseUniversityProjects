@@ -13,13 +13,16 @@ public class UsefulFunction
 {
     public static void throwException(String message)
     {
-        try {
+        try
+        {
             throw new Exception(message);
         }
-        catch (Exception e) {
+        catch (Exception e)
+        {
             e.printStackTrace();
         }
-        finally {
+        finally
+        {
             System.exit(-1);
         }
     }
@@ -29,29 +32,39 @@ public class UsefulFunction
      **/
     public static <K, V> void fillUpMap(Map<K, List<V>> map, K key, V newValue)
     {
-        if (map.isEmpty()) {
+        if (map.isEmpty())
+        {
             map.put(key, Arrays.asList(newValue));
             return;
         }
 
-        if (map.containsKey(key)) {
+        if (map.containsKey(key))
+        {
             //for case when all "pathNumbers" is filled up in the map
-            for (Map.Entry<K, List<V>> entry : map.entrySet()) {
-                if (entry.getKey() == key) {
-                    List<V> tempList = new ArrayList<>();
+//            for (Map.Entry<K, List<V>> entry : map.entrySet()) {
+//                if (entry.getKey() == key) {
+//                    List<V> tempList = new ArrayList<>();
+//
+//                    for (V value : entry.getValue()) {
+//                        tempList.add(value);
+//                    }
+//
+//                    tempList.add(newValue);
+//
+//                    map.put(key, tempList);
+//                    return;
+//                }
+//            }
+            List<V> tempList = new ArrayList<>();
 
-                    for (V v : entry.getValue()) {
-                        tempList.add(v);
-                    }
+            tempList.addAll(map.get(key));
+            tempList.add(newValue);
 
-                    tempList.add(newValue);
-
-                    map.put(key, tempList);
-                    return;
-                }
-            }
+            map.put(key, tempList);
+            return;
         }
-        else {
+        else
+        {
             //for case when there is opportunity that map doesn't contain the key
             map.put(key, Arrays.asList(newValue));
         }
@@ -59,18 +72,24 @@ public class UsefulFunction
 
     public static void fillUpMapForManyParents(Map<Integer, List<Integer>> map, int fromIndex, int newValue, int toIndex)
     {
-        if (map.isEmpty()) {
-            for (int key = fromIndex; key < toIndex; key++) {
+        if (map.isEmpty())
+        {
+            for (int key = fromIndex; key < toIndex; key++)
+            {
                 map.put(key, Arrays.asList(newValue));
             }
         }
-        else {
-            for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+        else
+        {
+            for (Map.Entry<Integer, List<Integer>> entry : map.entrySet())
+            {
                 int key = entry.getKey();
-                if (key >= fromIndex && key < toIndex) {
+                if (key >= fromIndex && key < toIndex)
+                {
                     List<Integer> tempList = new ArrayList<>();
 
-                    for (Integer v : entry.getValue()) {
+                    for (Integer v : entry.getValue())
+                    {
                         tempList.add(v);
                     }
 
@@ -86,12 +105,15 @@ public class UsefulFunction
     {
         List<Integer> tempList = new ArrayList<>();
 
-        for (Integer numberFromMap : map.get(pathNumber)) {
+        for (Integer numberFromMap : map.get(pathNumber))
+        {
             tempList.add(numberFromMap);
         }
 
-        for (Integer numberFromPaths : paths) {
-            if (!tempList.contains(numberFromPaths)) {
+        for (Integer numberFromPaths : paths)
+        {
+            if (!tempList.contains(numberFromPaths))
+            {
                 tempList.add(numberFromPaths);
             }
         }
@@ -103,10 +125,12 @@ public class UsefulFunction
     {
         List<Integer> tempList = map.get(pathNumber);
 
-        for (int i = paths.size() - 1; i >= 0; i--) {
+        for (int i = paths.size() - 1; i >= 0; i--)
+        {
             int number = paths.get(i);
 
-            if (!tempList.contains(number)) {
+            if (!tempList.contains(number))
+            {
                 tempList.add(number);
             }
         }
@@ -116,9 +140,11 @@ public class UsefulFunction
 
     public static void printMap(Map<Integer, List<Integer>> map)
     {
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet())
+        {
             System.out.print("№" + (entry.getKey() + 1) + ": "); // +1 because index commence from zero [0]
-            for (Integer nodeNumber : entry.getValue()) {
+            for (Integer nodeNumber : entry.getValue())
+            {
                 System.out.print(nodeNumber + "➔");
             }
             System.out.println();
@@ -130,9 +156,11 @@ public class UsefulFunction
 
         StringBuilder builder = new StringBuilder();
 
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet())
+        {
             builder.append("№ " + (entry.getKey() + 1) + ": "); // +1 because index commence from zero [0]
-            for (Integer nodeNumber : entry.getValue()) {
+            for (Integer nodeNumber : entry.getValue())
+            {
                 builder.append(nodeNumber + "➔");
             }
             builder = new StringBuilder(builder.substring(0, builder.length() - 1));
@@ -144,7 +172,8 @@ public class UsefulFunction
 
     public static <T> void printList(List<T> list)
     {
-        for (T nodeNumber : list) {
+        for (T nodeNumber : list)
+        {
             System.out.print(nodeNumber + "->");
         }
         System.out.println();
@@ -159,14 +188,16 @@ public class UsefulFunction
 
     public static void removeExistingItemFromListByIndex(List<Integer> paths, Integer element)
     {
-        if (paths.contains(element)) {
+        if (paths.contains(element))
+        {
             paths.remove(element);
         }
     }
 
     public static void removeExistingItemFromListByIndex(List<Integer> paths, Integer element, List<Integer> besidesList)
     {
-        if (besidesList.contains(element)) {
+        if (besidesList.contains(element))
+        {
             return;
         }
 
@@ -176,8 +207,10 @@ public class UsefulFunction
 
     public static int getExistingElementIndexIn(List<Integer> listOfMap, DekstraNode node)
     {
-        for (int i = 0; i < listOfMap.size(); i++) {
-            if (listOfMap.get(i) == node.getNumber()) {
+        for (int i = 0; i < listOfMap.size(); i++)
+        {
+            if (listOfMap.get(i) == node.getNumber())
+            {
                 return i;
             }
         }
@@ -187,7 +220,8 @@ public class UsefulFunction
 
     public static boolean listContainsElement(List<Integer> list, int element)
     {
-        if (list.contains(element)) {
+        if (list.contains(element))
+        {
             return true;
         }
 
@@ -196,12 +230,15 @@ public class UsefulFunction
 
     public static boolean listContainsAllElements(List<Integer> listToSearch, List<Integer> listWithElements)
     {
-        if (listToSearch == null || listToSearch.isEmpty() || listWithElements == null || listWithElements.isEmpty()) {
+        if (listToSearch == null || listToSearch.isEmpty() || listWithElements == null || listWithElements.isEmpty())
+        {
             return false;
         }
 
-        for (Integer nextNodeNumber : listWithElements) {
-            if (!listToSearch.contains(nextNodeNumber)) {
+        for (Integer nextNodeNumber : listWithElements)
+        {
+            if (!listToSearch.contains(nextNodeNumber))
+            {
                 return false;
             }
         }
@@ -211,9 +248,11 @@ public class UsefulFunction
 
     public synchronized static Integer generateNewPathNumberOf(Map<Integer, List<Integer>> map, List<Integer> listOfUsedPathNumbers)
     {
-        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet()) {
+        for (Map.Entry<Integer, List<Integer>> entry : map.entrySet())
+        {
             Integer key = entry.getKey();
-            if (!listOfUsedPathNumbers.contains(key)) {
+            if (!listOfUsedPathNumbers.contains(key))
+            {
                 return key;
             }
         }
@@ -223,8 +262,10 @@ public class UsefulFunction
 
     public static Integer generateNewPathNumberRangeFrom0To(Integer amountAllBackPaths, List<Integer> listOfUsedPathNumbers)
     {
-        for (int i = 0; i <= amountAllBackPaths; i++) {
-            if (!listOfUsedPathNumbers.contains(i)) {
+        for (int i = 0; i <= amountAllBackPaths; i++)
+        {
+            if (!listOfUsedPathNumbers.contains(i))
+            {
                 return i;
             }
         }
@@ -236,13 +277,17 @@ public class UsefulFunction
     {
         if (listToAdd == null || listToAdd.isEmpty()) return;
 
-        if (list == null || list.isEmpty()) {
-            for (int i = listToAdd.size() - 1; i >= 0; i--) {
+        if (list == null || list.isEmpty())
+        {
+            for (int i = listToAdd.size() - 1; i >= 0; i--)
+            {
                 list.add(listToAdd.get(i));
             }
         }
-        else {
-            for (int i = listToAdd.size() - 1; i >= 0; i--) {
+        else
+        {
+            for (int i = listToAdd.size() - 1; i >= 0; i--)
+            {
                 list.add(listToAdd.get(i));
             }
         }
@@ -252,12 +297,15 @@ public class UsefulFunction
     {
         if (listToAdd == null || listToAdd.isEmpty()) return;
 
-        if (list == null || list.isEmpty()) {
-            for (int i = 0; i < listToAdd.size(); i++) {
+        if (list == null || list.isEmpty())
+        {
+            for (int i = 0; i < listToAdd.size(); i++)
+            {
                 list.add(listToAdd.get(i));
             }
         }
-        else {
+        else
+        {
             list.addAll(listToAdd);
         }
     }
@@ -265,8 +313,10 @@ public class UsefulFunction
     public static List<Integer> getListElementsWhichExistIn(List<Integer> listWithNecessaryElements, List<Integer> list)
     {
         List<Integer> tempList = new CopyOnWriteArrayList<>();
-        for(Integer value : list){
-            if(UsefulFunction.listContainsElement(listWithNecessaryElements, value)) {
+        for (Integer value : list)
+        {
+            if (UsefulFunction.listContainsElement(listWithNecessaryElements, value))
+            {
                 tempList.add(value);
             }
         }
@@ -274,7 +324,8 @@ public class UsefulFunction
         return tempList;
     }
 
-    public static void removeCanvasObjectsByID(Pane canvas, String IdToRemove){
+    public static void removeCanvasObjectsByID(Pane canvas, String IdToRemove)
+    {
         if (canvas == null) return;
         if (canvas.getChildren() == null) return;
         if (canvas.getChildren().isEmpty()) return;
@@ -286,15 +337,18 @@ public class UsefulFunction
         //region Clear UI objects
         boolean nodeIdMustBeRemoved = false;
         ObservableList<Node> newGridNodesList = FXCollections.observableArrayList();
-        for (Node node : gridNodesList) {
+        for (Node node : gridNodesList)
+        {
             String node_ID = node.getId();
 
-            if (IdToRemove.equalsIgnoreCase(node_ID)) {
+            if (IdToRemove.equalsIgnoreCase(node_ID))
+            {
                 nodeIdMustBeRemoved = true;
                 break;
             }
 
-            if(nodeIdMustBeRemoved == false) {
+            if (nodeIdMustBeRemoved == false)
+            {
                 newGridNodesList.add(node);
             }
 
@@ -303,7 +357,8 @@ public class UsefulFunction
 
         gridNodesList.clear();
 
-        for (Node savedNode : newGridNodesList) {
+        for (Node savedNode : newGridNodesList)
+        {
             gridNodesList.add(savedNode);
         }
         //endregion
@@ -313,7 +368,8 @@ public class UsefulFunction
     {
         List<String> stringList = new ArrayList<>();
 
-        for (StringBuilder sb : stringBuilderList){
+        for (StringBuilder sb : stringBuilderList)
+        {
             stringList.add(sb.toString());
         }
 

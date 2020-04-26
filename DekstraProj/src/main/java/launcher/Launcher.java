@@ -36,12 +36,14 @@ import objects.MySpinner;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 public class Launcher extends Application
 {
     private static Graph graph = new Graph();
+    private static DekstraAlgorithm algorithm;
     //graph to save main graph to return a previous stage
     private static Graph tempGraph = null;
 
@@ -135,6 +137,14 @@ public class Launcher extends Application
             setUpManuallyFlag = false;
             runButtonLabelsSpinnersRadioButtonsDisableFlag = true;
 
+            //region prohibit user to return to stage when he can choose start or end point and then press "Run" button
+            returnPreviousStageMI_DisableFlag = true;
+            MenuItem return_previous_stage = (MenuItem) getObjectFromUIListByID(menuBar, Constants.RETURN_PREVIOUS_STAGE);
+            return_previous_stage.setDisable(returnPreviousStageMI_DisableFlag);
+            //endregion
+
+            singleThreadAlgorithmChosenFlag = true;
+
             //region FileChooser
             final FileChooser fileChooser = new FileChooser();
             fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("TXT", "*.txt"), new FileChooser.ExtensionFilter("XML", "*.xml"));
@@ -155,7 +165,62 @@ public class Launcher extends Application
             setUpManuallyFlag = true;
             uploadFileFlag = false;
             runButtonLabelsSpinnersRadioButtonsDisableFlag = true;
+            singleThreadAlgorithmChosenFlag = true;
             getUploadOrGenerationGraphStageCanvasObjects();
+        });
+        //endregion
+
+        //region Save file with Back paths (menuItem)
+        MenuItem save_bp_file_mi = new MenuItem("Save file");
+        save_bp_file_mi.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/save_bp_file_mi.png"))));
+        save_bp_file_mi.setOnAction((e) -> {
+            //region AlertMap for algorithm execution result
+            AlertCommands alertCommand = null;
+            Map<AlertCommands, String> alertMap = new HashMap<>();
+            alertMap.put(alertCommand.RIGHTS_RESULT, "File was successfully saved.");
+            alertMap.put(alertCommand.WARNING_RESULT, "There are not any back paths. Check for it.");
+            alertMap.put(alertCommand.ERROR_RESULT, "Error. File Error.");
+            //endregion
+
+            FileChooser fileChooser = new FileChooser();
+
+            //Set extension filter for text files
+//            FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt");
+            FileChooser.ExtensionFilter extFilter = new FileChooser.ExtensionFilter("MAX files (*.max)", "*.max");
+            fileChooser.getExtensionFilters().add(extFilter);
+
+            //Show save file dialog
+            File file = fileChooser.showSaveDialog(primaryStage);
+
+            if (file != null)
+            {
+                try
+                {
+                    PrintWriter writer;
+                    writer = new PrintWriter(file);
+
+                    String mapInfo = UsefulFunction.getMapContent(algorithm.getMap());
+                    if (mapInfo.isEmpty() || mapInfo.length() <= 0)
+                    {
+                        alertCommand = alertCommand.WARNING_RESULT;
+                    }
+                    else{
+                        alertCommand = alertCommand.RIGHTS_RESULT;
+                    }
+
+                    writer.println(mapInfo);
+                    writer.println();
+                    writer.close();
+                }
+                catch (IOException ex)
+                {
+                    alertCommand = alertCommand.ERROR_RESULT;
+                }
+                finally
+                {
+                    checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
+                }
+            }
         });
         //endregion
 
@@ -174,6 +239,7 @@ public class Launcher extends Application
         return_previous_stage.setGraphic(new ImageView(new Image(getClass().getResourceAsStream("/return_previous_stage.png"))));
         return_previous_stage.setOnAction((e) -> {
             runButtonLabelsSpinnersRadioButtonsDisableFlag = false;
+            singleThreadAlgorithmChosenFlag = true;
             getUploadOrGenerationGraphStageCanvasObjects();
         });
         //endregion
@@ -197,6 +263,7 @@ public class Launcher extends Application
 
         main_menu.getItems().add(uploadFromFile_mi);
         main_menu.getItems().add(setUpParameters_mi);
+        main_menu.getItems().add(save_bp_file_mi);
         main_menu.getItems().add(exit_mi);
 
         prepare_menu.getItems().add(return_previous_stage);
@@ -516,7 +583,12 @@ public class Launcher extends Application
         canvas.setBorder(new Border(new BorderStroke(Constants.CANVAS_BORDER_COLOR, BorderStrokeStyle.SOLID, null, Constants.CANVAS_BORDER_WIDTH)));
         canvas.setOnMouseClicked(e -> {
             //check for max nodes amount which can be set up on the canvas
-            if (!cursorInBoundsOf(e, canvas, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_TOP, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_RIGHT, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_BOTTOM, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_LEFT) || circlesNodesOnCanvas.size() >= graph.Nodes().size())
+            if (!cursorInBoundsOf(e,
+                                  canvas,
+                                  Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_TOP,
+                                  Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_RIGHT,
+                                  Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_BOTTOM,
+                                  Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_LEFT) || circlesNodesOnCanvas.size() >= graph.Nodes().size())
             {
                 //createAlert(Alert.AlertType.INFORMATION, "Stop spawn, please!", "You set up all available nodes.");
                 return;
@@ -542,7 +614,6 @@ public class Launcher extends Application
 
                 //set runButton, spinners for root and target nodes DISABLE as FALSE. In other words, activate them
                 runButtonLabelsSpinnersRadioButtonsDisableFlag = false;
-
                 runButton.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag);
                 rootAndTargetNode_spinners_forRunStage.stream().forEach(sp -> sp.setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
                 getObjectFromUIListByObjectType(grid, RadioButton.class).stream().forEach(obj -> ((RadioButton) obj).setDisable(runButtonLabelsSpinnersRadioButtonsDisableFlag));
@@ -712,7 +783,7 @@ public class Launcher extends Application
         try
         {
             //region Initiate Dekstra algorithm & DO algorithm
-            DekstraAlgorithm algorithm = new DekstraAlgorithm(graph);
+            algorithm = new DekstraAlgorithm(graph);
             algorithm.setSingleThreadAlgorithmChosenFlag(singleThreadAlgorithmChosenFlag);
             AlertCommands alertCommand = algorithm.DO(spinnerForRootNode.getCurrentValue(), spinnerForTargetNode.getCurrentValue());
             //endregion
@@ -720,7 +791,7 @@ public class Launcher extends Application
             //region AlertMap for algorithm execution result
             Map<AlertCommands, String> alertMap = new HashMap<>();
             alertMap.put(alertCommand.RIGHTS_RESULT, "Algorithm was successfully performed.");
-            alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. There is no such a path. Check for it.");
+            alertMap.put(alertCommand.WARNING_RESULT, "That is not good execution. There is no such a path. Check for it.\nYou may reload a file again.");
             alertMap.put(alertCommand.ERROR_RESULT, "Error. There is no such a path.");
             boolean continueExecution = checkCommandResultForWarningAndError(alertCommand, alertMap, grid);
             if (!continueExecution)

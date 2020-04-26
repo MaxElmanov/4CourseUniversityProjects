@@ -57,6 +57,7 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
         synchronized (graph)
         {
             System.out.println(Thread.currentThread().getName());
+            System.out.println(pathNumber + "= pathNumber");
 
             if (readyListOfMap != null && !readyListOfMap.isEmpty())
             {

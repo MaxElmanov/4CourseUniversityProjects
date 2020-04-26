@@ -147,7 +147,11 @@ public class DekstraAlgorithm
         //endregion
 
         //time counter function
-        pinpoint_time(targetNode);
+        boolean executionStatus = pinpoint_time(targetNode);
+        if (executionStatus == false)
+        {
+            return AlertCommands.WARNING_RESULT;
+        }
 
         System.out.println("\namount back paths = " + amountAllBackPaths);
 
@@ -361,33 +365,53 @@ public class DekstraAlgorithm
         return node;
     }
 
-    private void pinpoint_time(DekstraNode endNode) throws ExecutionException, InterruptedException
+    private boolean pinpoint_time(DekstraNode endNode) throws ExecutionException, InterruptedException
     {
-        //1 thread with recursion finding back paths method
-        if (singleThreadAlgorithmChosenFlag)
+        try
         {
-            Timer.start();
-            getAllBackPaths_Pre_Recursion(endNode);
-            algorithmSpentTime = Timer.stop();
-            System.out.println("Spent time = " + algorithmSpentTime + " mcs");
+            //1 thread with recursion finding back paths method
+            if (singleThreadAlgorithmChosenFlag)
+            {
+                Timer.start();
+                getAllBackPaths_Pre_Recursion(endNode);
+                algorithmSpentTime = Timer.stop();
+                System.out.println("Spent time = " + algorithmSpentTime + " mcs");
+            }
+            //multi thread execution for finding back paths method
+            else
+            {
+                getAllBackPaths_multiThreads(endNode);
+            }
         }
-        //multi thread execution for finding back paths method
-        else
+        catch (Throwable th)
         {
-            getAllBackPaths_multiThreads(endNode);
+            return false;
         }
 
+        return true;
     }
 
     private void getAllBackPaths_Pre_Recursion(DekstraNode node)
     {
-        UsefulFunction.fillUpMapForManyParents(map, pathNumber, node.getNumber(), amountAllBackPaths);
-        getAllBackPaths_recursion(node);
+        try{
+            UsefulFunction.fillUpMapForManyParents(map, pathNumber, node.getNumber(), amountAllBackPaths);
+            getAllBackPaths_recursion(node);
+        }
+        catch (StackOverflowError | Exception e){
+            e.printStackTrace();
+        }
     }
 
     private void getAllBackPaths_recursion(DekstraNode currentNode)
     {
         int currentNodeNumber = currentNode.getNumber();
+
+        if(pathNumber == 129) {
+            int a = 5;
+            System.out.println(a);
+        }
+
+        System.out.println("pathNumber = " + pathNumber);
         List<Integer> currentNodeParentsNumbers = currentNode.getParents();
 
         if (currentNodeParentsNumbers.isEmpty())
