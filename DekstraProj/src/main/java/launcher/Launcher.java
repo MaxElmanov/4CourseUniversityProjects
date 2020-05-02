@@ -1,10 +1,10 @@
 package launcher;
 
+import commonUsefulFunctions.UsefulFunction;
 import constants.AlertCommands;
 import constants.Constants;
 import files.FileExecutorForMatrixAdjacencyFactory;
 import files.IFileExecutor;
-import commonUsefulFunctions.UsefulFunction;
 import javafx.application.Application;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -24,7 +24,6 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.scene.control.ToggleGroup;
 import logics.DekstraAlgorithm;
 import logics.GraphDrawer;
 import logics.RandomGraphGenerator;
@@ -204,7 +203,8 @@ public class Launcher extends Application
                     {
                         alertCommand = alertCommand.WARNING_RESULT;
                     }
-                    else{
+                    else
+                    {
                         alertCommand = alertCommand.RIGHTS_RESULT;
                     }
 
@@ -844,13 +844,7 @@ public class Launcher extends Application
             grid.add(algorithmSpentTime_lbl, 0, 3, 1, 1);
             //endregion
 
-            //region outputInfo_listView
-//            TextArea outputInfo_textArea = new TextArea(UsefulFunction.getMapContent(algorithm.getMap()));
-//            outputInfo_textArea.setMaxWidth(Constants.SCREEN_WEIGHT * Constants.LEFTSIDE_WEIGHT_IN_PERCENT / 2);
-//            outputInfo_textArea.setMaxWidth(Constants.SCREEN_HEIGHT * Constants.LEFTSIDE_HEIGHT_IN_PERCENT);
-//            outputInfo_textArea.setEditable(false);
-//            outputInfo_textArea.setFont(Font.font(Constants.defaultFontFamily, FontWeight.BOLD, Constants.bigFontSize));
-//
+            //region outputInfo_listView (ListView)
             ObservableList<String> mapOutputInfo = FXCollections.observableArrayList(UsefulFunction.getMapContent(algorithm.getMap()));
             ListView<String> outputInfo_listView = new ListView<>(mapOutputInfo);
             outputInfo_listView.setId(Constants.LEFTSIDE_OBJECT_FOR_AFTER_RUN_STAGE_ID);
