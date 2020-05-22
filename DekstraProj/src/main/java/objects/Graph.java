@@ -61,7 +61,7 @@ public class Graph implements Cloneable
         if(nodes == null) return 0;
         if(nodes.isEmpty()) return 0;
 
-        //In the beginning "maxGraphWidth" equals 1 because "nodes"(graph) is not empty. Therefore, if even there will be only one node in the graph, graph width is gonna be 1
+        //In the beginning "maxGraphWidth" equals 1 because "nodes"(graph) is not empty. Therefore, if even there will be only one node in the graph, graph width gotta be 1
         int maxGraphWidth = 1;
 
         for (DekstraNode node : nodes){

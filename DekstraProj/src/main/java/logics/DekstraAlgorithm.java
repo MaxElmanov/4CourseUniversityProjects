@@ -169,7 +169,7 @@ public class DekstraAlgorithm
         {
             DekstraNode minWeightNode = getMinWeightNodeExcept(null);
 
-            if (!areThereNodesWhichNotToBeUsedInForwardAlgthm())
+            if (!areThereNodesWhichNotToBeUsedInForwardAlgthm() || minWeightNode.getNumber() == endPoint)
             {
                 System.out.println("Algorithm is finished");
                 System.out.println("minimal path from " + startPoint + " to " + endPoint + " = <" + graph.getNodeByNumber(endPoint).getBestWeight() + ">\n");
@@ -195,10 +195,7 @@ public class DekstraAlgorithm
             }
 
             //go out from the loop if "getMinWeightNodeExcept(minWeightNode)" function can't find "minWeightNode" among all nodes
-            if (goOutFromLoop)
-            {
-                break;
-            }
+            if (goOutFromLoop) break;
 
             List<Integer> weightsToNextNodes = minWeightNode.getWeights();
             for (int i = 0; i < nextNodes.size(); i++)
@@ -391,11 +388,11 @@ public class DekstraAlgorithm
         return true;
     }
 
-    private void getAllBackPaths_Pre_Recursion(DekstraNode node)
+    private void getAllBackPaths_Pre_Recursion(DekstraNode endNode)
     {
         try{
-            UsefulFunction.fillUpMapForManyParents(map, pathNumber, node.getNumber(), amountAllBackPaths);
-            getAllBackPaths_recursion(node);
+            UsefulFunction.fillUpMapForManyParents(map, pathNumber, endNode.getNumber(), amountAllBackPaths);
+            getAllBackPaths_recursion(endNode);
         }
         catch (StackOverflowError | Exception e){
             e.printStackTrace();
@@ -405,11 +402,6 @@ public class DekstraAlgorithm
     private void getAllBackPaths_recursion(DekstraNode currentNode)
     {
         int currentNodeNumber = currentNode.getNumber();
-
-        if(pathNumber == 129) {
-            int a = 5;
-            System.out.println(a);
-        }
 
         System.out.println("pathNumber = " + pathNumber);
         List<Integer> currentNodeParentsNumbers = currentNode.getParents();
@@ -615,14 +607,14 @@ public class DekstraAlgorithm
                 {
                     tafu.setThreadsAndFuturesRun_1_Flag(true);
                     tafu.setThreadsAndFuturesRun_2_Flag(false);
-                    runLoop(tafu.getThreads_1(), tafu.getFutures_1());
+                    submitAndGetThreads(tafu.getThreads_1(), tafu.getFutures_1());
                     tafu.clearThreadsAndFutures_1();
                 }
                 else if (!tafu.getThreads_2().isEmpty())
                 {
                     tafu.setThreadsAndFuturesRun_1_Flag(false);
                     tafu.setThreadsAndFuturesRun_2_Flag(true);
-                    runLoop(tafu.getThreads_2(), tafu.getFutures_2());
+                    submitAndGetThreads(tafu.getThreads_2(), tafu.getFutures_2());
                     tafu.clearThreadsAndFutures_2();
                 }
             }
@@ -636,7 +628,7 @@ public class DekstraAlgorithm
         System.out.println("MultiThreads. Inside function spent time = " + algorithmSpentTime);
     }
 
-    private void runLoop(List<DekstraBackPathsFinderThread_2_TEST> threads, List<Future<Integer>> futures) throws ExecutionException, InterruptedException
+    private void submitAndGetThreads(List<DekstraBackPathsFinderThread_2_TEST> threads, List<Future<Integer>> futures) throws ExecutionException, InterruptedException
     {
         for (DekstraBackPathsFinderThread_2_TEST thread : threads)
         {
