@@ -83,30 +83,32 @@ public class DekstraBackPathsFinderThread_2_TEST implements Callable<Integer>
             //map filling up
             UsefulFunction.fillUpMapByList(map, pathNumber, listOfMap);
 
-            //[listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
-            DekstraNode nextNode = graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
+            if(listOfMap.size() >= 2) {
+                //[listOfMap.size()-2] == number after rootNode 1->[15, 14, 2, 3, 4]
+                DekstraNode nextNode = graph.getNodeByNumber(listOfMap.get(listOfMap.size() - 2));
 
-            //get new next current node
-            DekstraNode nextCurrentNode = getNextCurrentNodeOfReadyListOfMap(nextNode, listOfMap);
+                //get new next current node
+                DekstraNode nextCurrentNode = getNextCurrentNodeOfReadyListOfMap(nextNode, listOfMap);
 
-            //get already measured subPath for next listOfMap
-            List<Integer> readyListOfMap = getReadyListOfMap(nextCurrentNode, listOfMap);
+                //get already measured subPath for next listOfMap
+                List<Integer> readyListOfMap = getReadyListOfMap(nextCurrentNode, listOfMap);
 
-            if (nextCurrentNode != null)
-            {
-                //region Generate new pathNumber
-                Integer pathNumber = UsefulFunction.generateNewPathNumberRangeFrom0To(amountAllBackPaths, listOfUsedPathNumbers);
-                if (pathNumber == null) return null;
-                listOfUsedPathNumbers.add(pathNumber);
-                //endregion
-
-                if (DekstraAlgorithm.getTafu().getThreadsAndFuturesRun_1_Flag())
+                if (nextCurrentNode != null)
                 {
-                    DekstraAlgorithm.getTafu().getThreads_2().add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
-                }
-                else if (DekstraAlgorithm.getTafu().getThreadsAndFuturesRun_2_Flag())
-                {
-                    DekstraAlgorithm.getTafu().getThreads_1().add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
+                    //region Generate new pathNumber
+                    Integer pathNumber = UsefulFunction.generateNewPathNumberRangeFrom0To(amountAllBackPaths, listOfUsedPathNumbers);
+                    if (pathNumber == null) return null;
+                    listOfUsedPathNumbers.add(pathNumber);
+                    //endregion
+
+                    if (DekstraAlgorithm.getTafu().getThreadsAndFuturesRun_1_Flag())
+                    {
+                        DekstraAlgorithm.getTafu().getThreads_2().add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
+                    }
+                    else if (DekstraAlgorithm.getTafu().getThreadsAndFuturesRun_2_Flag())
+                    {
+                        DekstraAlgorithm.getTafu().getThreads_1().add(new DekstraBackPathsFinderThread_2_TEST(pathNumber, nextCurrentNode, readyListOfMap, nodesCheckers));
+                    }
                 }
             }
         }

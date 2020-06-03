@@ -307,8 +307,8 @@ public class DekstraAlgorithm
             if (nextNode.getBackPathIndex() == 0)
             {
                 DekstraNode lastNodeWithSetBPI = getRandomNodeWithBPI(listNodesWithAddedBPI, listNotToUseNodesWithAddedBPI);
-                //UsefulFunction.printList(listNodesWithAddedBPI);
-                //System.out.println("lastNodeWithSetBPI = " + lastNodeWithSetBPI);
+                UsefulFunction.printList(listNodesWithAddedBPI);
+                System.out.println("lastNodeWithSetBPI = " + lastNodeWithSetBPI);
                 return getAmountBackPaths(subGraph, lastNodeWithSetBPI, targetNode);
             }
         }
@@ -327,14 +327,13 @@ public class DekstraAlgorithm
             return null;
         }
 
-        int randomIndex = rand.nextInt(size);
-        DekstraNode randomNode = listNodesWithAddedBPI.get(randomIndex);
+        DekstraNode randomNode = null;
 
-        while (listNotToUseNodesWithAddedBPI.contains(randomNode))
+        do
         {
-            randomIndex = rand.nextInt(size);
+            int randomIndex = rand.nextInt(size);
             randomNode = listNodesWithAddedBPI.get(randomIndex);
-        }
+        } while (listNotToUseNodesWithAddedBPI.contains(randomNode) || randomNode.getParents().size() <= 0);
 
         return randomNode;
     }
@@ -382,6 +381,7 @@ public class DekstraAlgorithm
         }
         catch (Throwable th)
         {
+            th.printStackTrace();
             return false;
         }
 
@@ -390,11 +390,13 @@ public class DekstraAlgorithm
 
     private void getAllBackPaths_Pre_Recursion(DekstraNode endNode)
     {
-        try{
+        try
+        {
             UsefulFunction.fillUpMapForManyParents(map, pathNumber, endNode.getNumber(), amountAllBackPaths);
             getAllBackPaths_recursion(endNode);
         }
-        catch (StackOverflowError | Exception e){
+        catch (StackOverflowError | Exception e)
+        {
             e.printStackTrace();
         }
     }

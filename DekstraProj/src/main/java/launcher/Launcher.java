@@ -27,10 +27,7 @@ import javafx.stage.Stage;
 import logics.DekstraAlgorithm;
 import logics.GraphDrawer;
 import logics.RandomGraphGenerator;
-import objects.DekstraNode;
-import objects.Graph;
-import objects.MyCircleNode;
-import objects.MySpinner;
+import objects.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -597,7 +594,7 @@ public class Launcher extends Application
             //if graph was created by random method then "generateRandomGraph_btn" remains in hidden state. Due to that we must remove this hidden button from the canvas
             clearWorkingAreaObjectsWithID(Constants.GENERATE_RANDOM_GRAPH_BUTTON_ID);
 
-            MyCircleNode circleNode = new MyCircleNode(e.getX(), e.getY(), Constants.NODE_RADIUS, Constants.NODE_COLOR, graph, canvas, grid, this);
+            MyCircleNode circleNode = new MyCircleNode(e.getX(), e.getY(), Constants.NODE_RADIUS, Constants.NODE_COLOR, graph, tempGraph, canvas, grid, this);
             Text nodeNumberText = circleNode.getUnusedNodeNumberAsText();
             circlesNodesOnCanvas.add(circleNode);
             nodeNumbersOnCanvas.add(nodeNumberText);
@@ -607,7 +604,7 @@ public class Launcher extends Application
             //check for last added node on canvas
             if (circlesNodesOnCanvas.size() == graph.Nodes().size())
             {
-                GraphDrawer.drawGraphEdges(graph, canvas, grid);
+                GraphDrawer.drawGraphEdges(graph, tempGraph, canvas, grid);
 
                 //set up events handlers for every circles nodes on canvas
                 circlesNodesOnCanvas.stream().forEach(cNode -> cNode.setUpSettings());
@@ -855,6 +852,7 @@ public class Launcher extends Application
             grid.add(tempCanvas, 2, 1, 8, 8);
 
             clearGraphNodes();
+            tempGraph = tempGraph;
             clearRootAndTarget_labels_spinners();
 
         }

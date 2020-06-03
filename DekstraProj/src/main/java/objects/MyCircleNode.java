@@ -15,6 +15,7 @@ import logics.GraphDrawer;
 public class MyCircleNode extends Circle
 {
     private Graph graph;
+    private Graph tempGraph;
     private GridPane grid;
     private Pane canvas;
     private int number;
@@ -22,10 +23,11 @@ public class MyCircleNode extends Circle
     private boolean MouseEntered = false;
     private boolean redTempStrokeCircleWasDeleted = false;
 
-    public MyCircleNode(double centerX, double centerY, double radius, Color nodeColor, Graph graph, Pane canvas, GridPane grid, Launcher launcher)
+    public MyCircleNode(double centerX, double centerY, double radius, Color nodeColor, Graph graph, Graph tempGraph, Pane canvas, GridPane grid, Launcher launcher)
     {
         super(centerX, centerY, radius);
         this.graph = graph;
+        this.tempGraph = tempGraph;
         this.canvas = canvas;
         this.grid = grid;
         this.launcher = launcher;
@@ -81,7 +83,6 @@ public class MyCircleNode extends Circle
 
                 MouseEntered = true;
                 redTempStrokeCircleWasDeleted = false;
-                System.out.println("setOnMouseEntered");
             }
         });
 
@@ -95,20 +96,6 @@ public class MyCircleNode extends Circle
             }
         });
 
-        this.setOnMouseClicked(event -> {
-            System.out.println("click");
-            return;
-        });
-
-        this.setOnMousePressed(event -> {
-            System.out.println("press");
-//            System.out.println(" number: " + this.number);
-//            System.out.println(" old x: " + this.getCenterX());
-//            System.out.println(" old y: " + this.getCenterY());
-//            System.out.println();
-            event.consume();
-        });
-
         this.setOnMouseReleased(event -> {
             if(launcher.cursorInBoundsOf(event, canvas, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_TOP, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_RIGHT, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_BOTTOM, Constants.PADDING_FROM_BOUNDS_NOT_TO_SPAWN_LEFT)) {
                 System.out.println("release");
@@ -120,7 +107,7 @@ public class MyCircleNode extends Circle
                 node.setY(this.getCenterY());
 
                 GraphDrawer.clearGraphEdges(canvas, this.number);
-                GraphDrawer.drawGraphEdges(graph, canvas, grid);
+                GraphDrawer.drawGraphEdges(graph, tempGraph, canvas, grid);
 
                 Text text = this.getUnusedNodeNumberAsText();
                 canvas.getChildren().add(text);

@@ -9,93 +9,44 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.shape.*;
 import javafx.scene.text.Font;
-import javafx.scene.text.Text;
 import objects.DekstraNode;
 import objects.Graph;
+import objects.TextNodeNumberOnCanvas;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 public class GraphDrawer
 {
     private static Graph graph;
+    private static Graph tempGraph;
     private static GridPane grid;
     private static Pane canvas;
 
-    private static void init(Pane canvas, Graph graph, GridPane grid)
+    private static void init(Graph graph, Graph tempGraph, Pane canvas, GridPane grid)
     {
         GraphDrawer.graph = graph;
+        GraphDrawer.tempGraph = tempGraph;
         GraphDrawer.canvas = canvas;
         GraphDrawer.grid = grid;
     }
 
-//    public static void drawGraphEdges(Canvas canvas, GraphicsContext gc, Graph graph)
-//    {
-//        init(canvas, gc, graph);
-//
-//        //region Nodes drawing
-//        gc.setFill(Constants.NODE_COLOR);
-//        for (DekstraNode node : graph.Nodes()){
-//            //region Random indexes getting
-//            int randomRowIndex = getRandomIndex(0, Constants.NODE_AMOUNT_IN_ROW - 1); //[-1] because ,for example, nodes amount in row equals 7, but array starts from 0 index and last index of array = (7 - 1)
-//            int randomColumnIndex = getRandomIndex(0, Constants.NODE_AMOUNT_IN_COLUMN - 1);
-//
-//            while(theRandomCellHasBeenOccupiedOnCanvas(randomRowIndex, randomColumnIndex)){
-//                randomRowIndex = getRandomIndex(0, Constants.NODE_AMOUNT_IN_ROW - 1);
-//                randomColumnIndex = getRandomIndex(0, Constants.NODE_AMOUNT_IN_COLUMN - 1);
-//            }
-//
-//            cellsOnCanvas[randomRowIndex][randomColumnIndex] = true;
-//            //endregion
-//
-//            double coordX = (randomRowIndex * spacingInRow) + (randomRowIndex * Constants.NODE_RADIUS) + spacingInRow;
-//            double coordY = (randomColumnIndex * spacingInColumn) + (randomColumnIndex * Constants.NODE_RADIUS) + spacingInColumn;
-//
-//            node.setX(coordX);
-//            node.setY(coordY);
-//
-//            gc.fillOval(coordX, coordY, Constants.NODE_RADIUS, Constants.NODE_RADIUS);
-//            //region Node number
-//            Text text = new Text(String.valueOf(node.getNumber()));
-//            text.setFont(Font.font(Constants.defaultFontFamily));
-//            gc.fillText(text.getText(), node.getX() - Constants.NODE_NUMBER_OFFSET_ON_CANVAS, node.getY() - Constants.NODE_NUMBER_OFFSET_ON_CANVAS);
-//            //endregion
-//        }
-//        //endregion
-//
-//        //region Edges drawing
-//        gc.setLineWidth(Constants.EDGE_WIDTH_ON_CANVAS);
-//        gc.setStroke(Constants.EDGE_COLOR);
-//
-//        for (DekstraNode node : graph.Nodes()){
-//            List<Integer> nextNodesNumbers = node.getNextNodes();
-//
-//            if(nextNodesNumbers == null || nextNodesNumbers.isEmpty()) continue;
-//
-//            for (Integer nextNodeNumber : nextNodesNumbers){
-//                DekstraNode nextNode = graph.getNodeByNumber(nextNodeNumber);
-//
-//                gc.beginPath();
-//                gc.moveTo(node.getX() + Constants.EDGE_OFFSET_ON_CANVAS, node.getY() + Constants.EDGE_OFFSET_ON_CANVAS);
-//                gc.lineTo(nextNode.getX() + Constants.EDGE_OFFSET_ON_CANVAS, nextNode.getY() + Constants.EDGE_OFFSET_ON_CANVAS);
-//                gc.stroke();
-//            }
-//        }
-//        //endregion
-//    }
-
-    public static void drawGraphEdges(Graph graph, Pane canvas, GridPane grid)
+    public static void drawGraphEdges(Graph graph, Graph tempGraph, Pane canvas, GridPane grid)
     {
-        init(canvas, graph, grid);
+        init(graph, tempGraph, canvas, grid);
 
         //region Edges drawing
-        for (DekstraNode startNode : graph.Nodes()) {
+        //when User press on the RUN button "tempGraph = graph.clone" is executed and graph is cleared. This condition takes care of a case when "graph" or "tempGraph" is null or empty and NullPointerException.
+        Graph fullGraph = (Objects.isNull(graph) || Objects.isNull(graph.Nodes()) || graph.Nodes().isEmpty()) ? tempGraph : graph;
+
+        for (DekstraNode startNode : fullGraph.Nodes()) {
             List<Integer> nextNodesNumbers = startNode.getNextNodes();
 
             if (nextNodesNumbers == null || nextNodesNumbers.isEmpty()) continue;
 
             for (int nextNodeIndex = 0; nextNodeIndex < nextNodesNumbers.size(); nextNodeIndex++) {
-                DekstraNode nextNode = graph.getNodeByNumber(nextNodesNumbers.get(nextNodeIndex));
+                DekstraNode nextNode = fullGraph.getNodeByNumber(nextNodesNumbers.get(nextNodeIndex));
 
                 double startX = startNode.getX();
                 double startY = startNode.getY();
@@ -114,7 +65,7 @@ public class GraphDrawer
                     circleOneNodeEdge.setStroke(Constants.EDGE_COLOR);
                     circleOneNodeEdge.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
                     int weight = startNode.getWeights().get(nextNodeIndex);
-                    Text nodeWeight_txt = getEdgeWeightForCircleLineAsText(circleCenterX, circleCenterY, Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS, weight);
+                    TextNodeNumberOnCanvas nodeWeight_txt = getEdgeWeightForCircleLineAsText(circleCenterX, circleCenterY, Constants.ONE_NODE_RADIUS_CIRCLE_EDGE_ON_CANVAS, startNode, weight, nextNodeIndex);
                     nodeWeight_txt.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     //Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
                     canvas.getChildren().addAll(circleOneNodeEdge, nodeWeight_txt);
@@ -131,7 +82,7 @@ public class GraphDrawer
                     int weight = startNode.getWeights().get(nextNodeIndex);
                     double biasedCoordX = polylinePoints[2];
                     double biasedCoordY = polylinePoints[3];
-                    Text nodeWeight_txt = getEdgeWeightForCurveLineAsText(biasedCoordX, biasedCoordY, weight);
+                    TextNodeNumberOnCanvas nodeWeight_txt = getEdgeWeightForCurveLineAsText(biasedCoordX, biasedCoordY, startNode, weight, nextNodeIndex);
                     nodeWeight_txt.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
                     lineTip.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
@@ -145,7 +96,7 @@ public class GraphDrawer
                     line.setStrokeWidth(Constants.EDGE_WIDTH_ON_CANVAS);
                     line.setStroke(Constants.EDGE_COLOR);
                     int weight = startNode.getWeights().get(nextNodeIndex);
-                    Text nodeWeight_txt = getEdgeWeightForDirectLineAsText(startX, startY, endX, endY, weight);
+                    TextNodeNumberOnCanvas nodeWeight_txt = getEdgeWeightForDirectLineAsText(startX, startY, endX, endY, startNode, weight, nextNodeIndex);
                     nodeWeight_txt.setId(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
                     //Tip getting
                     Polyline lineTip = getTipPolyline(startX, startY, endX, endY);
@@ -572,7 +523,7 @@ public class GraphDrawer
         return false;
     }
 
-    private static Text getEdgeWeightForCircleLineAsText(double circleCenterX, double circleCenterY, double radius, int weight)
+    private static TextNodeNumberOnCanvas getEdgeWeightForCircleLineAsText(double circleCenterX, double circleCenterY, double radius, DekstraNode startNode, int weight, int nextNodeIndex)
     {
         //region Get weight text coordinates (X,Y)
         double textX = 0, textY = 0;
@@ -582,7 +533,8 @@ public class GraphDrawer
 
         //endregion
 
-        Text text = new Text(String.valueOf(weight));
+        TextNodeNumberOnCanvas text = new TextNodeNumberOnCanvas(startNode, graph, tempGraph, canvas, grid, nextNodeIndex);
+        text.setText(String.valueOf(weight));
         text.setX(textX);
         text.setY(textY);
         text.setFont(Font.font(Constants.defaultFontFamily, Constants.defaultFontSize));
@@ -590,9 +542,10 @@ public class GraphDrawer
         return text;
     }
 
-    private static Text getEdgeWeightForCurveLineAsText(double textX, double textY, int weight)
+    private static TextNodeNumberOnCanvas getEdgeWeightForCurveLineAsText(double textX, double textY, DekstraNode startNode, int weight, int nextNodeIndex)
     {
-        Text text = new Text(String.valueOf(weight));
+        TextNodeNumberOnCanvas text = new TextNodeNumberOnCanvas(startNode, graph, tempGraph, canvas, grid, nextNodeIndex);
+        text.setText(String.valueOf(weight));
         text.setX(textX);
         text.setY(textY);
         text.setFont(Font.font(Constants.defaultFontFamily, Constants.defaultFontSize));
@@ -600,7 +553,7 @@ public class GraphDrawer
         return text;
     }
 
-    private static Text getEdgeWeightForDirectLineAsText(double startX, double startY, double endX, double endY, int weight)
+    private static TextNodeNumberOnCanvas getEdgeWeightForDirectLineAsText(double startX, double startY, double endX, double endY, DekstraNode startNode, int weight, int nextNodeIndex)
     {
         //region Get weight text coordinates (X,Y)
         double diffX = 0, diffY = 0, textX = 0, textY = 0;
@@ -626,7 +579,8 @@ public class GraphDrawer
         }
         //endregion
 
-        Text text = new Text(String.valueOf(weight));
+        TextNodeNumberOnCanvas text = new TextNodeNumberOnCanvas(startNode, graph, tempGraph, canvas, grid, nextNodeIndex);
+        text.setText(String.valueOf(weight));
         text.setX(textX);
         text.setY(textY);
         text.setFont(Font.font(Constants.defaultFontFamily, Constants.defaultFontSize));
@@ -675,9 +629,14 @@ public class GraphDrawer
         System.out.println(degrees16);
     }
 
-    public static void clearGraphEdges(Pane canvas, int nodeNumber)
+    public static void clearGraphEdges(Pane canvas, Integer nodeNumber)
     {
-        clearCanvasObjectsWithID(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID, Constants.NODE_NUMBER + nodeNumber);
+        if(Objects.nonNull(nodeNumber)) {
+            clearCanvasObjectsWithID(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID, Constants.NODE_NUMBER + nodeNumber);
+        }
+        else{
+            clearCanvasObjectsWithID(Constants.EDGES_OBJECT_POLY_LINE_TEXT_CIRCLE_ID);
+        }
     }
 
     private static void clearCanvasObjectsWithID(String... IDsToRemoveInArray)

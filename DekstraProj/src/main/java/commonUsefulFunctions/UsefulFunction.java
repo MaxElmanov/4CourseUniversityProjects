@@ -27,6 +27,22 @@ public class UsefulFunction
         }
     }
 
+    public static void printException(String message)
+    {
+        try
+        {
+            System.out.println(new Date().getTime() + " - " + message);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        finally
+        {
+            System.exit(-1);
+        }
+    }
+
     /**
      * K - Integer, V - List<Integer>>
      **/
